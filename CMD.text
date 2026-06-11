@@ -1,0 +1,3 @@
+docker build --no-cache -t my-react-nginx .
+docker rm -f react-website 2>/dev/null
+docker run -d -p 8080:80 --name react-website my-react-nginx
