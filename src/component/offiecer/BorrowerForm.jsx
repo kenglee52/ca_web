@@ -24,85 +24,93 @@ const toDateInputValue = (date) => {
   if (!date) return '';
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
-  return d.toISOString().split('T')[0]; // YYYY-MM-DD
+  return d.toISOString().split('T')[0];
 };
 
-// --- ຂັ້ນຕອນທີ 1: ປັບປຸງ Zod Schema ໃຫ້ຮອງຮັບ Conditional Validation ---
+// --- ຂັ້ນຕອນທີ 1: Zod Schema ທີ່ປອດໄພ ແລະ ຍືດຫຍຸ່ນ ---
 const borrowerSchema = z.object({
   title: z.enum(["THAO", "NANG"], { message: "ຕ້ອງເລືອກ ທ້າວ ຫຼື ນາງ" }),
-  laoFirstName: z.string().min(1, { message: "ຊື່ (ລາວ) ຕ້ອງການ" }),
+  laoFirstName: z.string().min(1, { message: "ชື່ (ລາວ) ຕ້ອງການ" }),
   laoLastName: z.string().min(1, { message: "ນາມສະກຸນ (ລາວ) ຕ້ອງການ" }),
   firstName: z.string().min(1, { message: "First Name (English) ຕ້ອງການ" }),
-  lastName: z.string().min(1, { message: "Last Name (English) ຕ້ອງການ" }),
+  lastName: z.string().min(1, { message: "Last Name (English) ต้องการ" }),
 
   age: z.coerce
     .number({ invalid_type_error: "ອາຍຸຕ້ອງເປັນຕົວເລກ" })
     .min(18, { message: "ອາຍຸຕ້ອງບໍ່ນ້ອຍກວ່າ 18 ປີ" }),
 
-  maritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]).optional(),
-  nationality: z.string().optional(),
+  maritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]).optional().or(z.literal('')),
+  nationality: z.string().optional().or(z.literal('')),
   education: z.enum([
     "NONE", "KINDERGARTEN", "PRIMARY", "LOWER_SECONDARY",
     "UPPER_SECONDARY", "VOCATIONAL", "ASSOCIATE", "BACHELOR",
     "MASTER", "DOCTORATE"
-  ]).optional(),
-  sectorId: z.coerce.number().optional(),
-  occupation: z.string().optional(),
-  employerName: z.string().optional(),
-  position: z.string().optional(),
-  workingStartDate: z.string().optional(),
-  phone: z.string().optional(),
-  village: z.string().optional(),
+  ]).optional().or(z.literal('')),
+  
+  sectorId: z.union([z.coerce.number(), z.string(), z.null()]).optional(),
+  occupation: z.string().optional().or(z.literal('')),
+  employerName: z.string().optional().or(z.literal('')),
+  position: z.string().optional().or(z.literal('')),
+  workingStartDate: z.string().optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  village: z.string().optional().or(z.literal('')),
 
-  provinceId: z.coerce.number().optional(),
-  districtId: z.coerce.number().optional(),
+  provinceId: z.coerce.number().optional().or(z.literal('')),
+  districtId: z.coerce.number().optional().or(z.literal('')),
 
-  certificateType: z.enum(["ID_CARD", "PASSPORT", "FAMILY_BOOK"]).optional(),
-  certificateNo: z.string().optional(),
-  idCardExpiryDate: z.string().optional(),
+  certificateType: z.enum(["ID_CARD", "PASSPORT", "FAMILY_BOOK"]).optional().or(z.literal('')),
+  certificateNo: z.string().optional().or(z.literal('')),
+  idCardExpiryDate: z.string().optional().or(z.literal('')),
   noExpiryDate: z.boolean().optional(),
-  dateOfBirth: z.string().optional(),
-  currentAddressLink: z.string().url({ message: "ລິ້ງທີ່ຢູ່ຕ້ອງເປັນ URL ທີ່ຖືກຕ້ອງ" }).optional().or(z.literal('')),
+  dateOfBirth: z.string().optional().or(z.literal('')),
+  currentAddressLink: z.string().optional().or(z.literal('')),
 
   monthlySalary: z.coerce.number().min(0, { message: "ເງິນເດືອນເດືອນບໍ່ສາມາດຕິດລົບ" }).optional(),
   householdExpense: z.coerce.number().min(0, { message: "ຄ່າຄອບຄົວບໍ່ສາມາດຕິດລົບ" }).optional(),
   netIncome: z.coerce.number().min(0, { message: "ລາຍໄດ້ສຸດທິບໍ່ສາມາດຕິດລົບ" }).optional(),
 
-  relationshipWithFina: z.string().optional(),
+  relationshipWithFina: z.string().optional().or(z.literal('')),
 
-  companyProvinceId: z.coerce.number().optional(),
-  companyDistrictId: z.coerce.number().optional(),
-  companyVillage: z.string().optional(),
-  companyAddressLink: z.string().url({ message: "ລິ້ງທີ່ຢູ່ບໍລິສັດຕ້ອງເປັນ URL" }).optional().or(z.literal('')),
-  companyPhone: z.string().optional(),
+  companyProvinceId: z.coerce.number().optional().or(z.literal('')),
+  companyDistrictId: z.coerce.number().optional().or(z.literal('')),
+  companyVillage: z.string().optional().or(z.literal('')),
+  companyAddressLink: z.string().optional().or(z.literal('')),
+  companyPhone: z.string().optional().or(z.literal('')),
 
-  // ເພີ່ມ field ສໍາລັບ Checkbox
   hasBusinessInfo: z.boolean().optional(),
 
-  // ຂັ້ນຕອນຂໍ້ມູນທຸລະກິດ
-  businessRegistrationNumber: z.string().optional(),
-  businessRegisterName: z.string().optional(),
-  businessType: z.string().optional(),
-  businessVillage: z.string().optional(),
-  businessProvinceId: z.coerce.number().optional(),
-  businessDistrictId: z.coerce.number().optional(),
-  businessAddressLink: z.string().url({ message: "ລິ້ງທີ່ຢູ່ທຸລະກິດຕ້ອງເປັນ URL" }).optional().or(z.literal('')),
-  businessPhone: z.string().optional(),
-  employeeCount: z.coerce.number().min(0, { message: "ຈຳນວນພະນັກງານບໍ່ສາມາດຕິດລົບ" }).optional(),
+  businessRegistrationNumber: z.string().optional().or(z.literal('')),
+  businessRegisterName: z.string().optional().or(z.literal('')),
+  businessType: z.string().optional().or(z.literal('')),
+  businessVillage: z.string().optional().or(z.literal('')),
+  businessProvinceId: z.union([z.coerce.number(), z.string(), z.null()]).optional(),
+  businessDistrictId: z.union([z.coerce.number(), z.string(), z.null()]).optional(),
+  businessAddressLink: z.string().optional().or(z.literal('')),
+  businessPhone: z.string().optional().or(z.literal('')),
+  employeeCount: z.union([z.coerce.number(), z.string(), z.null()]).optional(),
 }).superRefine((data, ctx) => {
-  // ຖ້າຕິກ Checkbox ໃຫ້ກວດເຊັກ field ທີ່ຕິດເຄື່ອງໝາຍ *
-  if (data.hasBusinessInfo) {
-    if (!data.sectorId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາເລືອກປະເພດທຸລະກິດ", path: ["sectorId"] });
-    }
-    if (!data.businessRegisterName || data.businessRegisterName.trim() === "") {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາໃສ່ຊື່ຕາມທະບຽນທຸລະກິດ", path: ["businessRegisterName"] });
-    }
-    if (!data.businessProvinceId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາເລືອກແຂວງທຸລະກິດ", path: ["businessProvinceId"] });
-    }
-    if (!data.businessDistrictId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາເລືອກເມືອງທຸລະກິດ", path: ["businessDistrictId"] });
+  // 🟢 ຖ້າບໍ່ໄດ້ຕິກ Checkbox ຂໍ້ມູນທຸລະກິດ ໃຫ້ຂ້າມການກວດ Validation ຂອງສ່ວນທຸລະກິດທັງໝົດທັນທີ
+  if (!data.hasBusinessInfo) {
+    return;
+  }
+
+  if (!data.sectorId || data.sectorId === "" || data.sectorId === "null") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາເລືອກປະເພດທຸລະກິດ", path: ["sectorId"] });
+  }
+  if (!data.businessRegisterName || data.businessRegisterName.trim() === "" || data.businessRegisterName === "null") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາໃສ່ຊື່ຕາມທະບຽນທຸລະກິດ", path: ["businessRegisterName"] });
+  }
+  if (!data.businessProvinceId || data.businessProvinceId === "" || data.businessProvinceId === "null") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາເລືອກແແຂວງທຸລະກິດ", path: ["businessProvinceId"] });
+  }
+  if (!data.businessDistrictId || data.businessDistrictId === "" || data.businessDistrictId === "null") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ກະລຸນາເລືອກເມືອງທຸລະກິດ", path: ["businessDistrictId"] });
+  }
+  
+  if (data.businessAddressLink && data.businessAddressLink.trim() !== "" && data.businessAddressLink !== "null") {
+    const urlSchema = z.string().url();
+    if (!urlSchema.safeParse(data.businessAddressLink).success) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ລິ້ງທີ່ຢູ່ທຸລະກິດຕ້ອງເປັນ URL ທີ່ຖືກຕ້ອງ", path: ["businessAddressLink"] });
     }
   }
 });
@@ -207,36 +215,52 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
     fetch();
   }, [selectedBusinessProvinceId]);
 
-  // --- ຂັ້ນຕອນທີ 3: ຈັດການ Edit Mode (Auto-check ຖ້າມີຂໍ້ມູນທຸລະກິດ) ---
+  // --- 🟢 ຂັ້ນຕອນທີ 2: ປັບປຸງການ Clean Data ຕອນ Edit Mode (ປ້ອງກັນ string "null") ---
   useEffect(() => {
     if (borrower) {
+      const sanitized = Object.fromEntries(
+        Object.entries(borrower).map(([k, v]) => {
+          if (v === null || v === "null" || v === "undefined") return ["", ""];
+          return [k, v];
+        })
+      );
+
+      // ເຊັກໃຫ້ຊັດເຈນວ່າຂໍ້ມູນທຸລະກິດມີຢູ່ແທ້ໆ ບໍ່ແມ່ນຄ່າ null ທີ່ເປັນ string
+      const isValid = (val) => val && val !== "" && val !== "null" && val !== null;
+      
+      const hasBiz = !!(
+        isValid(borrower.businessRegisterName) || 
+        isValid(borrower.sectorId) || 
+        isValid(borrower.businessRegistrationNumber)
+      );
+
       reset({
-        ...borrower,
-        hasBusinessInfo: !!borrower.businessRegisterName || !!borrower.sectorId, // ຖ້າມີຊື່ ຫຼື sector ໃຫ້ຕິກ checkbox ເລີຍ
+        title: borrower.title || "THAO",
+        nationality: borrower.nationality || "Lao",
+        ...sanitized,
+
+        hasBusinessInfo: hasBiz, // 🟢 ຖ້າຂໍ້ມູນເປັນ null ຟອມທຸລະກິດຈະຖືກຊ່ອນໄວ້ຄືໃນຮູບທັນທີ
         idCardExpiryDate: toDateInputValue(borrower.idCardExpiryDate),
         dateOfBirth: toDateInputValue(borrower.dateOfBirth),
         workingStartDate: toDateInputValue(borrower.workingStartDate),
-        title: borrower.title || "THAO",
-        laoFirstName: borrower.laoFirstName || "",
-        laoLastName: borrower.laoLastName || "",
-        firstName: borrower.firstName || "",
-        lastName: borrower.lastName || "",
-        provinceId: borrower.provinceId?.toString(),
-        districtId: borrower.districtId?.toString(),
-        companyProvinceId: borrower.companyProvinceId?.toString(),
-        companyDistrictId: borrower.companyDistrictId?.toString(),
-        businessProvinceId: borrower.businessProvinceId?.toString(),
-        businessDistrictId: borrower.businessDistrictId?.toString(),
+
+        provinceId: borrower.provinceId && borrower.provinceId !== "null" ? borrower.provinceId.toString() : "",
+        districtId: borrower.districtId && borrower.districtId !== "null" ? borrower.districtId.toString() : "",
+        companyProvinceId: borrower.companyProvinceId && borrower.companyProvinceId !== "null" ? borrower.companyProvinceId.toString() : "",
+        companyDistrictId: borrower.companyDistrictId && borrower.companyDistrictId !== "null" ? borrower.companyDistrictId.toString() : "",
+
+        businessProvinceId: borrower.businessProvinceId && borrower.businessProvinceId !== "null" ? borrower.businessProvinceId.toString() : "",
+        businessDistrictId: borrower.businessDistrictId && borrower.businessDistrictId !== "null" ? borrower.businessDistrictId.toString() : "",
+
         monthlySalary: borrower.monthlySalary || 0,
         householdExpense: borrower.householdExpense || 0,
         netIncome: borrower.netIncome || 0,
+        employeeCount: borrower.employeeCount && borrower.employeeCount !== "null" ? borrower.employeeCount : "",
       });
     }
   }, [borrower, reset]);
 
-  // --- ຂັ້ນຕອນທີ 2: ການຈັດການຂໍ້ມູນກ່ອນສົ່ງໄປ Backend (Data Cleaning) ---
   const onSubmit = async (data) => {
-    console.log('Form submitted with data:', data);
     try {
       const isBiz = data.hasBusinessInfo;
       const submitData = {
@@ -246,39 +270,38 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         companyProvinceId: data.companyProvinceId ? Number(data.companyProvinceId) : null,
         companyDistrictId: data.companyDistrictId ? Number(data.companyDistrictId) : null,
 
-        // ຖ້າບໍ່ໄດ້ຕິກ Checkbox ໃຫ້ສົ່ງຄ່າເປັນ null ທັງໝົດ
         businessProvinceId: isBiz && data.businessProvinceId ? Number(data.businessProvinceId) : null,
         businessDistrictId: isBiz && data.businessDistrictId ? Number(data.businessDistrictId) : null,
         sectorId: isBiz && data.sectorId ? Number(data.sectorId) : null,
-        businessRegisterName: isBiz ? data.businessRegisterName : null,
-        businessRegistrationNumber: isBiz ? data.businessRegistrationNumber : null,
-        businessType: isBiz ? data.businessType : null,
-        businessVillage: isBiz ? data.businessVillage : null,
-        businessAddressLink: isBiz ? data.businessAddressLink : null,
-        businessPhone: isBiz ? data.businessPhone : null,
-        employeeCount: isBiz ? Number(data.employeeCount) : null,
+        businessRegisterName: isBiz ? (data.businessRegisterName || null) : null,
+        businessRegistrationNumber: isBiz ? (data.businessRegistrationNumber || null) : null,
+        businessType: isBiz ? (data.businessType || null) : null,
+        businessVillage: isBiz ? (data.businessVillage || null) : null,
+        businessAddressLink: isBiz ? (data.businessAddressLink || null) : null,
+        businessPhone: isBiz ? (data.businessPhone || null) : null,
+        employeeCount: isBiz && data.employeeCount ? Number(data.employeeCount) : null,
         idCardExpiryDate: data.noExpiryDate ? null : (data.idCardExpiryDate || null),
       };
-      console.log('Submitting to backend:', submitData);
+
+      delete submitData.hasBusinessInfo;
+      delete submitData.noExpiryDate;
 
       const url = borrower
         ? `${Url.base_url}/borrowers/${borrower.id}`
         : `${Url.base_url}/borrowers`;
       const method = borrower ? 'put' : 'post';
-      console.log(`Calling ${method.toUpperCase()} ${url}`);
+      
       const res = await axios[method](url, submitData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      console.log('Response from server:', res.data);
+      
       if (res.data.success) {
         toast.success(borrower ? 'ແກ້ໄຂຂໍ້ມູນຜູ້ກູ້ສຳເລັດ' : 'ເພີ່ມຜູ້ກູ້ໃໝ່ສຳເລັດ');
         onSuccess();
       }
     } catch (err) {
       console.error('Submit error:', err);
-      const errorMessage =
-        err.response?.data?.message ||
-        (borrower ? 'ການແກ້ໄຂລົ້ມເຫລວ' : 'ການເພີ່ມຂໍ້ມູນລົ້ມເຫລວ');
+      const errorMessage = err.response?.data?.message || 'ການບັນທຶກຂໍ້ມູນລົ້ມເຫລວ';
       toast.error(errorMessage);
     }
   };
@@ -295,10 +318,14 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit, (formErrors) => {
+      console.log("❌ Form Validation Errors:", formErrors);
+      toast.error("ກະລຸນາກວດສອບຂໍ້ມູນໃຫ້ຄົບຖ້ວນ");
+    })} className="space-y-8">
+      
       {/* ຂໍ້ມູນສ່ວນຕົວ */}
       <div className="border-b pb-4">
-        <h3 className="text-lg font-semibold text-orange-700">ຂໍ້ມູນສ່ວນຕົວ</h3>
+        <h3 className="text-lg font-semibold text-orange-700"><b>ຂໍ້ມູນສ່ວນຕົວ</b></h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -362,7 +389,7 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
               <SelectItem value="SINGLE">ໂສດ</SelectItem>
               <SelectItem value="MARRIED">ແຕ່ງງານ</SelectItem>
               <SelectItem value="DIVORCED">ຢ່າຮ້າງ</SelectItem>
-              <SelectItem value="WIDOWED">ໝ້າ</SelectItem>
+              <SelectItem value="WIDOWED">ໝ້າຍ</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -498,8 +525,8 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
           <Label>ເລກບັດປະຈຳຕົວ</Label>
           <Input {...register('certificateNo')} />
         </div>
+
         <div className="grid gap-4">
-          {/* Checkbox หลัก */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -510,36 +537,23 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
                 const checked = e.target.checked;
                 setValue('noExpiryDate', checked);
                 if (checked) {
-                  setValue('idCardExpiryDate', ''); // ล้างวันที่ให้ว่าง
+                  setValue('idCardExpiryDate', '');
                 }
               }}
             />
-            <Label
-              htmlFor="noExpiryDate"
-              className="text-sm font-medium cursor-pointer"
-            >
+            <Label htmlFor="noExpiryDate" className="text-sm font-medium cursor-pointer">
               ເອກະສານນີ້ບໍ່ມີວັນທີ່ໝົດອາຍຸ (ບັນທຶກເປັນ null)
             </Label>
           </div>
 
-          {/* Input วันที่ - แสดงเฉพาะเมื่อไม่ติ๊ก */}
           {!watch('noExpiryDate') && (
             <div className="grid gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Label htmlFor="idCardExpiryDate">
-                ວັນທີໝົດອາຍຸເອກະສານ <span className="text-xs text-gray-500">(optional)</span>
-              </Label>
+              <Label htmlFor="idCardExpiryDate">ວັນທີໝົດອາຍຸເອກະສານ</Label>
               <Input
                 id="idCardExpiryDate"
                 type="date"
                 {...register('idCardExpiryDate')}
-                placeholder="ວັນທີ່ໝົດອາຍຸ"
               />
-              <p className="text-xs text-gray-500">
-                ຖ້າເອກະສານໝົດອາຍຸບໍ່ມີ → ກະລຸນາຕິກ Checkbox ດ້ານເທິງ
-              </p>
-              {errors.idCardExpiryDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.idCardExpiryDate.message}</p>
-              )}
             </div>
           )}
         </div>
@@ -551,13 +565,14 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
 
         <div>
           <Label>ລິ້ງທີ່ຢູ່ປັດຈຸບັນ (Google Maps)</Label>
-          <Input {...register('currentAddressLink')} placeholder="https://maps.google.com/..." />
+          <Input {...register('currentAddressLink')} placeholder="http://..." />
           {errors.currentAddressLink && <p className="text-red-500 text-sm mt-1">{errors.currentAddressLink.message}</p>}
         </div>
       </div>
 
+      {/* ຂໍ້ມູນການເງິນ */}
       <div className="border-b pb-4 mt-8">
-        <h3 className="text-lg font-semibold text-orange-700">ຂໍ້ມູນການເງິນ</h3>
+        <h3 className="text-lg font-semibold text-orange-700"><b>¼ຂໍ້ມູນການເງິນ</b></h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -568,7 +583,6 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
             value={formatCurrency(watch('monthlySalary'))}
             onChange={(e) => setValue('monthlySalary', parseCurrency(e.target.value), { shouldValidate: true })}
           />
-          {errors.monthlySalary && <p className="text-red-500 text-sm mt-1">{errors.monthlySalary.message}</p>}
         </div>
 
         <div>
@@ -590,8 +604,9 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         </div>
       </div>
 
+      {/* ຂໍ້ມູນບໍລິສັດ / ບ່ອນເຮັດວຽກ */}
       <div className="border-b pb-4 mt-8">
-        <h3 className="text-lg font-semibold text-orange-700">ຂໍ້ມູນບໍລິສັດ / ບ່ອນເຮັດວຽກ</h3>
+        <h3 className="text-lg font-semibold text-orange-700"><b>ຂໍ້ມູນບໍລິສັດ / ບ່ອນເຮັດວຽກ</b></h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -635,14 +650,13 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         </div>
 
         <div>
-          <Label>ບ້ານບໍລິສັດ</Label>
+          <Label>ບàານບໍລິສັດ</Label>
           <Input {...register('companyVillage')} />
         </div>
 
         <div>
           <Label>ລິ້ງທີ່ຢູ່ບໍລິສັດ (Google Maps)</Label>
-          <Input {...register('companyAddressLink')} placeholder="https://maps.google.com/..." />
-          {errors.companyAddressLink && <p className="text-red-500 text-sm mt-1">{errors.companyAddressLink.message}</p>}
+          <Input {...register('companyAddressLink')} placeholder="http://..." />
         </div>
 
         <div>
@@ -651,31 +665,33 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         </div>
       </div>
 
-      {/* ຂັ້ນຕອນຂໍ້ມູນທຸລະກິດ */}
-      <div className="flex items-center gap-2 border-b pb-4 mt-8 mb-6">
+      {/* Checkbox ຂໍ້ມູນທຸລະກິດ */}
+      <div className="flex items-center gap-3 border-b pb-4 mt-8 mb-6">
         <input
           type="checkbox"
           id="hasBusinessInfo"
           className="w-5 h-5 cursor-pointer accent-orange-600"
-          {...register('hasBusinessInfo')}
+          checked={watch('hasBusinessInfo') || false}
+          onChange={(e) => {
+            setValue('hasBusinessInfo', e.target.checked, { shouldValidate: true });
+          }}
         />
         <label
           htmlFor="hasBusinessInfo"
-          className="text-lg font-semibold text-orange-700 cursor-pointer"
+          className="text-lg font-semibold text-orange-700 cursor-pointer select-none"
         >
           ຂໍ້ມູນທຸລະກິດ (ຖ້າມີ)
         </label>
       </div>
 
-      {watch('hasBusinessInfo') && (
+      {/* ສະແດງຟອມທຸລະກິດ ສະເພາະຕອນທີ່ຕິກ true ເທົ່ານັ້ນ */}
+      {watch('hasBusinessInfo') === true && (
         <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
           <div>
             <Label>ປະເພດທຸລະກິດ (Sector) <span className="text-red-500">*</span></Label>
             <SectorSelect
               value={watch('sectorId')}
-              onChange={(value) => {
-                setValue('sectorId', value, { shouldValidate: true });
-              }}
+              onChange={(value) => setValue('sectorId', value, { shouldValidate: true })}
             />
             {errors.sectorId && <p className="text-red-500 text-sm mt-1">{errors.sectorId.message}</p>}
           </div>
@@ -683,18 +699,18 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <Label>ເລກທະບຽນວິສາຫະກິດ</Label>
-              <Input {...register('businessRegistrationNumber')} placeholder="ຖ້າມີ" />
+              <Input {...register('businessRegistrationNumber')} />
             </div>
 
             <div>
               <Label>ຊື່ຕາມທະບຽນທຸລະກິດ <span className="text-red-500">*</span></Label>
-              <Input {...register('businessRegisterName')} placeholder="ໃສ່ຊື່ວິສາຫະກິດ ຫຼື ຊື່ຮ້ານ" />
+              <Input {...register('businessRegisterName')} />
               {errors.businessRegisterName && <p className="text-red-500 text-sm mt-1">{errors.businessRegisterName.message}</p>}
             </div>
 
             <div>
               <Label>ປະເພດທຸລະກິດ</Label>
-              <Input {...register('businessType')} placeholder="ເຊັ່ນ ຮ້ານຂາຍເຄື່ອງ, ບໍລິການ" />
+              <Input {...register('businessType')} />
             </div>
 
             <div>
@@ -745,13 +761,13 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
 
             <div>
               <Label>ລິ້ງທີ່ຢູ່ທຸລະກິດ (Google Maps)</Label>
-              <Input {...register('businessAddressLink')} placeholder="http://..." />
+              <Input {...register('businessAddressLink')} />
               {errors.businessAddressLink && <p className="text-red-500 text-sm mt-1">{errors.businessAddressLink.message}</p>}
             </div>
 
             <div>
               <Label>ເບີໂທທຸລະກິດ</Label>
-              <Input {...register('businessPhone')} placeholder="020..." />
+              <Input {...register('businessPhone')} />
             </div>
 
             <div>
@@ -767,6 +783,7 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         </div>
       )}
 
+      {/* ປຸ່ມກົດ */}
       <div className="flex justify-end gap-3 pt-8 border-t mt-8">
         <Button type="button" variant="outline" onClick={onCancel} className="px-6">
           ຍົກເລີກ

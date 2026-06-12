@@ -1,4 +1,5 @@
 // src/pages/officer/Borrower.jsx
+// (quick edit to verify file is writable)
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Url } from '@/lib/Part';
@@ -93,13 +94,13 @@ const Borrower = () => {
     if (!borrowerToDelete) return;
 
     try {
-      await axios.delete(`${Url.base_url}/borrowers/${borrowerToDelete.id}`, {
+      await axios.delete(`${Url.base_url}/borrower/${borrowerToDelete.id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       toast.success('ລຶບຜູ້ກູ້ສຳເລັດ');
       fetchBorrowers();
     } catch (err) {
-      toast.error('ບໍ່ສາມາດລຶບຜູ້ກູ້ໄດ້');
+      toast.error('ບໍ່ສາມາດລຶບຜູ້ກູ້ໄດ້ ເນື່ອງຈາກສະຖານະບໍ່ແມ່ນ rejected');
     } finally {
       setDeleteDialogOpen(false);
       setBorrowerToDelete(null);

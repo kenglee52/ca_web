@@ -57,7 +57,9 @@ const Login = () => {
         username: form.username.trim(),
         password: form.password,
       });
-
+      if(res.status === 429){
+        toast.warning(`${res.message}`)
+      }
       const { token, user, message } = res.data;
 
       // ✅ เก็บ key เดียวกับ ProtectedRoute
