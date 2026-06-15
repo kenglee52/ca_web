@@ -10,9 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Printer, Download, ArrowLeft } from 'lucide-react';
+import { exportToExcel, handlePrintPDF, fmtMoney, fmtDate } from '@/utils/loanReportUtils';
 
-const fmtMoney = (num) => num ? Number(num).toLocaleString('lo-LA') : '0';
-const fmtDate = (date) => date ? new Date(date).toLocaleString('lo-LA', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
 const FullLoanReport = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -69,11 +68,11 @@ const FullLoanReport = () => {
                 <ArrowLeft className="h-4 w-4" />
                 ກັບຄືນ
               </Button>
-              <Button className="gap-2 bg-white text-blue-800 hover:bg-gray-100">
+              <Button onClick={handlePrintPDF} className="gap-2 bg-white text-blue-800 hover:bg-gray-100">
                 <Printer className="h-4 w-4" />
                 ພິມ
               </Button>
-              <Button variant="secondary" className="gap-2">
+              <Button variant="secondary" className="gap-2" disabled>
                 <Download className="h-4 w-4" />
                 Export PDF
               </Button>
@@ -81,31 +80,11 @@ const FullLoanReport = () => {
   className="gap-2 bg-green-600 hover:bg-green-700 text-white"
   onClick={async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${Url.base_url}/loan-applications/${id}/export-excel`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob', // !
-      });
-  const ct = response.headers["content-type"] || "";
-
-if (!ct.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
-
-  const text = await new Response(response.data).text();
-  console.log("Not xlsx, server returned:", ct, text.slice(0, 300));
-  toast.error("Server  Excel ( URL / API error)");
-  return;
-}
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `loan-report-${id}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      await exportToExcel(report, `loan-report`);
       toast.success('Export Excel ສຳເລັດ');
     } catch (err) {
       toast.error('Export Excel ລົ້ມເຫລວ');
+      console.error(err);
     }
   }}
 >
