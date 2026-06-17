@@ -216,7 +216,9 @@ const Borrower = () => {
                         <TableCell className="text-center">
                           {borrower.monthlySalary ? `₭ ${Number(borrower.monthlySalary).toLocaleString()}` : '-'}
                         </TableCell>
-                        <TableCell>{borrower.certificateNo || '-'}</TableCell>
+                        <TableCell>{borrower.certificateNo || '-'}
+                          <br /><span className='text-green-600 text-sm font-bold'>{borrower.certificateType}</span>
+                        </TableCell>
                         <TableCell className="text-right space-x-1 w-44">
                           <TooltipProvider>
                             <Tooltip>

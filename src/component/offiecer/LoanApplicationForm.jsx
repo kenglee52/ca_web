@@ -1,107 +1,107 @@
 // src/component/offiecer/LoanApplicationForm.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React,{useEffect,useMemo,useState} from "react";
+import {useNavigate,useParams} from "react-router-dom";
 import axios from "axios";
-import { Url } from "@/lib/Part";
-import { toast } from "sonner";
+import {Url} from "@/lib/Part";
+import {toast} from "sonner";
 
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowLeft,Send } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Textarea} from "@/components/ui/textarea";
+import {Checkbox} from "@/components/ui/checkbox";
+import {Loader2,ArrowLeft,Send} from "lucide-react";
 import BorrowerSelect from "@/page/officer/BorrowerSelect";
 
-const formatMoneyInput = (value) => {
-  if (value === "" || value === null || value === undefined) return "";
-  const n = Number(value);
-  if (Number.isNaN(n)) return "";
+const formatMoneyInput=(value) => {
+  if(value===""||value===null||value===undefined) return "";
+  const n=Number(value);
+  if(Number.isNaN(n)) return "";
   return n.toLocaleString("lo-LA");
 };
 
-const parseMoneyInput = (text) => {
-  if (!text) return "";
-  const cleaned = String(text).replace(/,/g, "").trim();
-  const n = Number(cleaned);
-  if (Number.isNaN(n)) return "";
+const parseMoneyInput=(text) => {
+  if(!text) return "";
+  const cleaned=String(text).replace(/,/g,"").trim();
+  const n=Number(cleaned);
+  if(Number.isNaN(n)) return "";
   return cleaned;
 };
 
-const LoanApplicationForm = () => {
-  const navigate = useNavigate();
-  const { id } = useParams(); // ถ้ามี :id → edit mode, ถ้าไม่มี → create mode
-  const mode = id ? "edit" : "create";
-  const appId = id ? Number(id) : null;
+const LoanApplicationForm=() => {
+  const navigate=useNavigate();
+  const {id}=useParams(); // ถ้ามี :id → edit mode, ถ้าไม่มี → create mode
+  const mode=id? "edit":"create";
+  const appId=id? Number(id):null;
 
-  const token = useMemo(() => localStorage.getItem("token"), []);
-  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
+  const token=useMemo(() => localStorage.getItem("token"),[]);
+  const headers=useMemo(() => ({Authorization: `Bearer ${token}`}),[token]);
 
-  const [saving, setSaving] = useState(false);
-// เพิ่มบรรทัดนี้ (หลัง setSaving)
-const [resubmitting, setResubmitting] = useState(false);
+  const [saving,setSaving]=useState(false);
+  // เพิ่มบรรทัดนี้ (หลัง setSaving)
+  const [resubmitting,setResubmitting]=useState(false);
   // borrower select
-  const [borrowerId, setBorrowerId] = useState(null);
-  const [borrower, setBorrower] = useState(null);
+  const [borrowerId,setBorrowerId]=useState(null);
+  const [borrower,setBorrower]=useState(null);
 
   // required fields
-  const [loanPurpose, setLoanPurpose] = useState("");
-  const [loanAmountRequested, setLoanAmountRequested] = useState("");
-  const [termMonths, setTermMonths] = useState("");
-  const [interestRatePa, setInterestRatePa] = useState("");
-  const [application, setApplication] = useState(null);
+  const [loanPurpose,setLoanPurpose]=useState("");
+  const [loanAmountRequested,setLoanAmountRequested]=useState("");
+  const [termMonths,setTermMonths]=useState("");
+  const [interestRatePa,setInterestRatePa]=useState("");
+  const [application,setApplication]=useState(null);
   // optional - LoanType (radio เดียวเลือกได้ตัวเดียว)
-  const [loanType, setLoanType] = useState("");
+  const [loanType,setLoanType]=useState("");
 
   // optional - CustomerType (checkbox เลือกได้ตัวเดียว)
-  const [customerType, setCustomerType] = useState(""); // "NEW" หรือ "EXISTING"
+  const [customerType,setCustomerType]=useState(""); // "NEW" หรือ "EXISTING"
 
   // ลิงก์เอกสาร (แทนการอัพโหลดไฟล์)
-  const [documentLinks, setDocumentLinks] = useState("");
-  const [verifierComments, setVerifierComments] = useState("");
+  const [documentLinks,setDocumentLinks]=useState("");
+  const [verifierComments,setVerifierComments]=useState("");
   // ความเห็นของผู้จัดทำ (preparerComments)
-  const [preparerComments, setPreparerComments] = useState(
-    mode === "create" ? "Created by CREDIT_OFFICER - Pending further review" : ""
+  const [preparerComments,setPreparerComments]=useState(
+    mode==="create"? "Created by CREDIT_OFFICER - Pending further review":""
   );
 
-  const onPickBorrower = (b) => {
-    setBorrower(b || null);
-    setBorrowerId(b?.id ?? null);
+  const onPickBorrower=(b) => {
+    setBorrower(b||null);
+    setBorrowerId(b?.id??null);
   };
 
-  const fetchBorrowerById = async (borrowerId) => {
+  const fetchBorrowerById=async (borrowerId) => {
     try {
-      const res = await axios.get(`${Url.base_url}/borrowers/${borrowerId}`, { headers });
-      setBorrower(res.data.data || null);
-    } catch (err) {
+      const res=await axios.get(`${Url.base_url}/borrowers/${borrowerId}`,{headers});
+      setBorrower(res.data.data||null);
+    } catch(err) {
       setBorrower(null);
     }
   };
 
   // โหลดข้อมูลเมื่อ edit mode
   useEffect(() => {
-    if (mode === "edit" && appId) {
-      const fetchApplication = async () => {
+    if(mode==="edit"&&appId) {
+      const fetchApplication=async () => {
         try {
-          const res = await axios.get(`${Url.base_url}/loan-applications/${appId}`, { headers });
-          const data = res.data.data;
+          const res=await axios.get(`${Url.base_url}/loan-applications/${appId}`,{headers});
+          const data=res.data.data;
 
-          const bId = Number(data.borrowerId);
+          const bId=Number(data.borrowerId);
           setBorrowerId(bId);
           fetchBorrowerById(bId);
           setApplication(data);
-          setLoanPurpose(data.loanPurpose || "");
-          setVerifierComments(data.assessment?.verifierComments || "");
-          setLoanAmountRequested(data.loanAmountRequested != null ? String(data.loanAmountRequested) : "");
-          setTermMonths(data.termMonths != null ? String(data.termMonths) : "");
-          setInterestRatePa(data.interestRatePa != null ? String(data.interestRatePa) : "");
-          setLoanType(data.loanType || "");
-          setCustomerType(data.customerType || "");
-          setDocumentLinks(data.documentLinks || "");
-          setPreparerComments(data.assessment?.preparerComments ||
+          setLoanPurpose(data.loanPurpose||"");
+          setVerifierComments(data.assessment?.verifierComments||"");
+          setLoanAmountRequested(data.loanAmountRequested!=null? String(data.loanAmountRequested):"");
+          setTermMonths(data.termMonths!=null? String(data.termMonths):"");
+          setInterestRatePa(data.interestRatePa!=null? String(data.interestRatePa):"");
+          setLoanType(data.loanType||"");
+          setCustomerType(data.customerType||"");
+          setDocumentLinks(data.documentLinks||"");
+          setPreparerComments(data.assessment?.preparerComments||
             "Created by CREDIT_OFFICER - Pending further review");
-        } catch (err) {
+        } catch(err) {
           toast.error("ດຶງຂໍ້ມູນຄຳຂໍກູ້ລົ້ມເຫລວ");
         }
       };
@@ -121,33 +121,33 @@ const [resubmitting, setResubmitting] = useState(false);
       setPreparerComments("Created by CREDIT_OFFICER - Pending further review");
       setVerifierComments("");
     }
-  }, [mode, appId, headers, navigate]);
+  },[mode,appId,headers,navigate]);
 
-  const validate = () => {
-    if (!borrowerId || Number.isNaN(Number(borrowerId))) {
+  const validate=() => {
+    if(!borrowerId||Number.isNaN(Number(borrowerId))) {
       toast.error("ກະລຸນາເລືອກຜູ້ກູ້");
       return false;
     }
 
-    if (!loanPurpose.trim()) {
+    if(!loanPurpose.trim()) {
       toast.error("ຈຸດປະສົງການກູ້ ຈຳເປັນ");
       return false;
     }
 
-    const amt = Number(loanAmountRequested);
-    if (!Number.isFinite(amt) || amt <= 0) {
+    const amt=Number(loanAmountRequested);
+    if(!Number.isFinite(amt)||amt<=0) {
       toast.error("ຈຳນວນກູ້ທີ່ຮ້ອງຂໍ ຕ້ອງ > 0");
       return false;
     }
 
-    const term = Number(termMonths);
-    if (!Number.isInteger(term) || term <= 0) {
+    const term=Number(termMonths);
+    if(!Number.isInteger(term)||term<=0) {
       toast.error("ໄລຍະເວລາກູ້ (ເດືອນ) ຕ້ອງເປັນຈຳນວນເຕັມ > 0");
       return false;
     }
 
-    const rate = Number(interestRatePa);
-    if (!Number.isFinite(rate) || rate < 0) {
+    const rate=Number(interestRatePa);
+    if(!Number.isFinite(rate)||rate<0) {
       toast.error("ອັດຕາດອກເບ້ຍຕ້ອງເປັນຕົວເລກ >= 0");
       return false;
     }
@@ -155,71 +155,71 @@ const [resubmitting, setResubmitting] = useState(false);
     return true;
   };
 
-  const onSubmit = async () => {
-    if (!validate()) return;
+  const onSubmit=async () => {
+    if(!validate()) return;
 
     setSaving(true);
 
     try {
-      const payload = {
+      const payload={
         borrowerId: Number(borrowerId),
         loanPurpose: loanPurpose.trim(),
         loanAmountRequested: Number(loanAmountRequested),
         termMonths: Number(termMonths),
         interestRatePa: Number(interestRatePa),
-        loanType: loanType || null,
-        customerType: customerType || null,
-        documentLinks: documentLinks.trim() || null,
-        preparerComments: preparerComments.trim() || null,
+        loanType: loanType||null,
+        customerType: customerType||null,
+        documentLinks: documentLinks.trim()||null,
+        preparerComments: preparerComments.trim()||null,
 
       };
-      console.log("payload:", payload);
+      console.log("payload:",payload);
 
 
       let res;
-      if (mode === "edit" && appId) {
-        res = await axios.put(`${Url.base_url}/loan-applications/${appId}`, payload, { headers });
+      if(mode==="edit"&&appId) {
+        res=await axios.put(`${Url.base_url}/loan-applications/${appId}`,payload,{headers});
         toast.success("ແກ້ໄຂຄຳຂໍກູ້ສຳເລັດ");
       } else {
-        res = await axios.post(`${Url.base_url}/loan-applications`, payload, { headers });
+        res=await axios.post(`${Url.base_url}/loan-applications`,payload,{headers});
         toast.success("ສ້າງຄຳຂໍກູ້ສຳເລັດ");
       }
 
 
       navigate("/creditofficer/applications");
-    } catch (err) {
-      const msg = err.response?.data?.message || "ບັນທຶກລົ້ມເຫລວ";
+    } catch(err) {
+      const msg=err.response?.data?.message||"ບັນທຶກລົ້ມເຫລວ";
       toast.error(msg); // ตอนนี้ toast จะขึ้นข้อความจริงจาก backend
-      console.error("Loan submission error:", err.response?.data || err);
+      console.error("Loan submission error:",err.response?.data||err);
     }
     finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel=() => {
     navigate(-1);
   };
-  const handleResubmit = async () => {
-    if (!preparerComments.trim()) {
+  const handleResubmit=async () => {
+    if(!preparerComments.trim()) {
       toast.error("ກະລຸນາອະທິບາຍການແກ້ໄຂໃນຊ່ອງ Preparer Comments ก່ອນສົ່ງກັບ");
       return;
     }
 
-    const confirmResubmit = window.confirm("ທ່ານແນ່ໃຈບໍ່ວ່າແກ້ໄຂສຳເລັດແລ້ວ ຕ້ອງການສົ່ງກັບ Verifier ກວດໃໝ່?");
-    if (!confirmResubmit) return;
+    const confirmResubmit=window.confirm("ທ່ານແນ່ໃຈບໍ່ວ່າແກ້ໄຂສຳເລັດແລ້ວ ຕ້ອງການສົ່ງກັບ Verifier ກວດໃໝ່?");
+    if(!confirmResubmit) return;
 
     setResubmitting(true);
     try {
       await axios.post(
         `${Url.base_url}/loan-applications/${appId}/resubmit-to-verifier`,
-        { comments: preparerComments.trim() }, // ส่ง preparerComments เป็นเหตุผลด้วยก็ได้
-        { headers }
+        {comments: preparerComments.trim()}, // ส่ง preparerComments เป็นเหตุผลด้วยก็ได้
+        {headers}
       );
       toast.success("ສົ່ງກັບ Verifier ສຳເລັດ");
       navigate("/creditofficer/applications");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "ສົ່ງກັບລົ້ມເຫລວ");
+    } catch(err) {
+      toast.error(err.response?.data?.message||"ສົ່ງກັບລົ້ມເຫລວ");
     } finally {
       setResubmitting(false);
     }
@@ -233,13 +233,13 @@ const [resubmitting, setResubmitting] = useState(false);
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold text-orange-700">
-            {mode === "edit" ? "ແກ້ໄຂຄຳຂໍກູ້" : "ສ້າງຄຳຂໍກູ້ໃໝ່"}
+            {mode==="edit"? "ແກ້ໄຂຄຳຂໍກູ້":"ສ້າງຄຳຂໍກູ້ໃໝ່"}
           </h1>
         </div>
       </div>
 
       <div className="grid gap-6">
-        {verifierComments && (
+        {verifierComments&&(
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
             <Label className="text-red-700 font-medium">ຄຳແນະນຳຈາກ Verifier:</Label>
             <p className="mt-2 text-red-800 whitespace-pre-wrap">
@@ -255,11 +255,11 @@ const [resubmitting, setResubmitting] = useState(false);
               value={borrowerId}
               selectedBorrower={borrower}
               onChange={onPickBorrower}
-              disabled={mode === "edit"}
+              disabled={mode==="edit"}
             />
-            {borrower && (
+            {borrower&&(
               <div className="text-sm text-muted-foreground">
-                {borrower.firstName} {borrower.lastName} • {borrower.phone || "-"}
+                {borrower.firstName} {borrower.lastName} • {borrower.phone||"-"}
               </div>
             )}
           </div>
@@ -297,7 +297,7 @@ const [resubmitting, setResubmitting] = useState(false);
             <Input
               inputMode="numeric"
               value={termMonths}
-              onChange={(e) => setTermMonths(e.target.value.replace(/[^\d]/g, ""))}
+              onChange={(e) => setTermMonths(e.target.value.replace(/[^\d]/g,""))}
               placeholder="12"
             />
           </div>
@@ -322,7 +322,7 @@ const [resubmitting, setResubmitting] = useState(false);
                 type="radio"
                 name="loanType"
                 value="PERSONAL_SALARY_GUARANTEE"
-                checked={loanType === "PERSONAL_SALARY_GUARANTEE"}
+                checked={loanType==="PERSONAL_SALARY_GUARANTEE"}
                 onChange={(e) => setLoanType(e.target.value)}
               />
               PERSONAL_SALARY_GUARANTEE (ກູ້ສ່ວນບຸກຄົນ ມີປະກັນເງິນເດືອນ)
@@ -333,7 +333,7 @@ const [resubmitting, setResubmitting] = useState(false);
                 type="radio"
                 name="loanType"
                 value="PERSONAL_WITH_COLLATERAL"
-                checked={loanType === "PERSONAL_WITH_COLLATERAL"}
+                checked={loanType==="PERSONAL_WITH_COLLATERAL"}
                 onChange={(e) => setLoanType(e.target.value)}
               />
               PERSONAL_WITH_COLLATERAL (ກູ້ສ່ວນບຸກຄົນ ມີຫຼັກປະກັນ)
@@ -344,7 +344,7 @@ const [resubmitting, setResubmitting] = useState(false);
                 type="radio"
                 name="loanType"
                 value="BUSINESS"
-                checked={loanType === "BUSINESS"}
+                checked={loanType==="BUSINESS"}
                 onChange={(e) => setLoanType(e.target.value)}
               />
               BUSINESS (ທຸລະກິດ)
@@ -370,9 +370,9 @@ const [resubmitting, setResubmitting] = useState(false);
             <div className="flex items-center gap-2">
               <Checkbox
                 id="new-customer"
-                checked={customerType === "NEW"}
+                checked={customerType==="NEW"}
                 onCheckedChange={(checked) => {
-                  if (checked) setCustomerType("NEW");
+                  if(checked) setCustomerType("NEW");
                   else setCustomerType("");
                 }}
               />
@@ -384,9 +384,9 @@ const [resubmitting, setResubmitting] = useState(false);
             <div className="flex items-center gap-2">
               <Checkbox
                 id="old-customer"
-                checked={customerType === "EXISTING"}
+                checked={customerType==="EXISTING"}
                 onCheckedChange={(checked) => {
-                  if (checked) setCustomerType("EXISTING");
+                  if(checked) setCustomerType("EXISTING");
                   else setCustomerType("");
                 }}
               />
@@ -442,42 +442,24 @@ https://1drv.ms/... (ສັນຍາ)"
             disabled={saving}
             className="bg-orange-600 hover:bg-orange-700 min-w-[140px]"
           >
-            {saving ? (
+            {saving? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ກຳລັງບັນທຶກ...
               </>
-            ) : mode === "edit" ? (
+            ):mode==="edit"&&application?.status==="RETURNED"? (
+              // ✅ ປ່ຽນ label ໃຫ້ user ຮູ້ວ່າກົດດຽວ save + resubmit
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                ບັນທຶກ ແລະ ສົ່ງກັບ Verifier
+              </>
+            ):mode==="edit"? (
               "ບັນທຶກການແກ້ໄຂ"
-            ) : (
+            ):(
               "ສ້າງຄຳຂໍກູ້"
             )}
           </Button>
-          {application?.status === "RETURNED" && (
-            <Button
-              onClick={handleResubmit}
-              disabled={resubmitting || saving || !preparerComments.trim()}
-              className="bg-green-600 hover:bg-green-700 min-w-[220px] font-bold"
-            >
-              {resubmitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  ກຳລັງສົ່ງກັບ...
-                </>
-              ) : (
-                <>
-                  <Send className="h-5 w-5 mr-2" />
-                  ສົ່ງກັບ Verifier ກວດໃໝ່
-                </>
-              )}
-            </Button>
-          )}
         </div>
-
-        <p className="text-center text-sm text-slate-400 mt-4">
-          ຫຼັງບັນທຶກການແກ້ໄຂແລ້ວ ຈຶ່ງກົດ "ສົ່ງກັບ Verifier ກວດໃໝ່" ເພື່ອເລີ່ມການກວດສອບໃໝ່
-        </p>
-
       </div>
     </div>
   );
