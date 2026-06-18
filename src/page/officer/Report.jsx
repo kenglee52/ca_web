@@ -83,7 +83,6 @@ const Report = () => {
   }, [q, status, createdFrom, createdTo, loanType, customerType, page]);
 
   const totalPages = Math.ceil((stats.total || 0) / limit) || 1;
-
   const resetFilters = () => {
     setQ("");
     setStatus("ALL");
@@ -93,7 +92,9 @@ const Report = () => {
     setCustomerType("ALL");
     setPage(1);
   };
-
+  const EditLoanApplication = (id) => {
+    navigate(`/creditofficer/returned/${id}`)
+  }
   return (
     <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -301,7 +302,7 @@ const Report = () => {
                                 className={`h-8 w-8 p-0 ${canEdit ? "text-orange-600 hover:text-orange-700" : "text-slate-400 cursor-not-allowed"}`}
                                 onClick={() => {
                                   if (canEdit) {
-                                    navigate(`/creditofficer/applications/${item.id}`);
+                                    EditLoanApplication(item.id);
                                   } else {
                                     toast.info("ແກ້ໄຂໄດ້ເຉພາະສະຖານະ PENDING ຫຼື RETURNED");
                                   }

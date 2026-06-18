@@ -586,7 +586,7 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         </div>
 
         <div>
-          <Label>ຄ່າຄອບຄົວ (ກີບ)</Label>
+          <Label>ຄ່າໃຊ້ຈ່າຍຄອບຄົວ (ກີບ)</Label>
           <Input
             type="text"
             value={formatCurrency(watch('householdExpense'))}
@@ -650,7 +650,7 @@ const BorrowerForm = ({ borrower, onSuccess, onCancel }) => {
         </div>
 
         <div>
-          <Label>ບàານບໍລິສັດ</Label>
+          <Label>ບ້ານບໍລິສັດ</Label>
           <Input {...register('companyVillage')} />
         </div>
 

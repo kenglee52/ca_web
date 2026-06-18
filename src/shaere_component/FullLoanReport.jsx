@@ -1,37 +1,37 @@
 // src/pages/FullLoanReport.jsx
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React,{useEffect,useState} from 'react';
+import {useParams,useNavigate} from 'react-router-dom';
 import axios from 'axios';
-import { Url } from '@/lib/Part';
-import { toast } from "sonner";
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
-import { Printer, Download, ArrowLeft } from 'lucide-react';
-import { exportToExcel, handlePrintPDF, fmtMoney, fmtDate } from '@/utils/loanReportUtils';
+import {Url} from '@/lib/Part';
+import {toast} from "sonner";
+import {Badge} from '@/components/ui/badge';
+import {Button} from '@/components/ui/button';
+import {Card,CardContent,CardHeader,CardTitle} from '@/components/ui/card';
+import {Table,TableBody,TableCell,TableHead,TableHeader,TableRow} from '@/components/ui/table';
+import {Separator} from '@/components/ui/separator';
+import {Printer,Download,ArrowLeft} from 'lucide-react';
+import {exportToExcel,handlePrintPDF,fmtMoney,fmtDate} from '@/utils/loanReportUtils';
 
-const FullLoanReport = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [report, setReport] = useState(null);
-  const [loading, setLoading] = useState(true);
+const FullLoanReport=() => {
+  const {id}=useParams();
+  const navigate=useNavigate();
+  const [report,setReport]=useState(null);
+  const [loading,setLoading]=useState(true);
 
   useEffect(() => {
-    const fetchReport = async () => {
+    const fetchReport=async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${Url.base_url}/loan-applications/${id}/full-report`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const token=localStorage.getItem('token');
+        const res=await axios.get(`${Url.base_url}/loan-applications/${id}/full-report`,{
+          headers: {Authorization: `Bearer ${token}`},
         });
 
-        if (res.data.success) {
+        if(res.data.success) {
           setReport(res.data);
         } else {
-          toast.error(res.data.message || 'ດຶງຂໍ້ມູນລາຍງານລົ້ມເຫລວ');
+          toast.error(res.data.message||'ດຶງຂໍ້ມູນລາຍງານລົ້ມເຫລວ');
         }
-      } catch (err) {
+      } catch(err) {
         toast.error('ເກີດຂໍ້ຜິດພາດໃນການດຶງຂໍ້ມູນ');
         console.error(err);
       } finally {
@@ -40,18 +40,18 @@ const FullLoanReport = () => {
     };
 
     fetchReport();
-  }, [id]);
+  },[id]);
 
-  if (loading) {
+  if(loading) {
     return <div className="p-8 text-center">ກຳລັງໂຫຼດຂໍ້ມູນ Full Report...</div>;
   }
 
-  if (!report || !report.data) {
+  if(!report||!report.data) {
     return <div className="p-8 text-center text-red-600">ບໍ່ພົບຂໍ້ມູນ Loan Application</div>;
   }
 
-  const { data: loan, summary, financialSummary } = report;
-  const assessment = loan.assessment || {};
+  const {data: loan,summary,financialSummary}=report;
+  const assessment=loan.assessment||{};
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8 print:bg-white print:p-4">
@@ -76,21 +76,21 @@ const FullLoanReport = () => {
                 <Download className="h-4 w-4" />
                 Export PDF
               </Button>
-              <Button 
-  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-  onClick={async () => {
-    try {
-      await exportToExcel(report, `loan-report`);
-      toast.success('Export Excel ສຳເລັດ');
-    } catch (err) {
-      toast.error('Export Excel ລົ້ມເຫລວ');
-      console.error(err);
-    }
-  }}
->
-  <Download className="h-4 w-4" />
-  Export Excel
-</Button>
+              <Button
+                className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                onClick={async () => {
+                  try {
+                    await exportToExcel(report,`loan-report`);
+                    toast.success('Export Excel ສຳເລັດ');
+                  } catch(err) {
+                    toast.error('Export Excel ລົ້ມເຫລວ');
+                    console.error(err);
+                  }
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
             </div>
           </div>
         </div>
@@ -125,7 +125,7 @@ const FullLoanReport = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">ຂະແໜງການ</p>
-                <p className="font-medium">{loan.borrower.sector?.sector || '-'}</p>
+                <p className="font-medium">{loan.borrower.sector?.sector||'-'}</p>
               </div>
             </CardContent>
           </Card>
@@ -185,85 +185,85 @@ const FullLoanReport = () => {
             </CardContent>
           </Card>
 
-        
-      
-<Card className="border-none shadow-sm">
-  <CardHeader className="bg-gray-50">
-    <CardTitle>ປະຫວັດການປະເມີນການ</CardTitle>
-  </CardHeader>
-  <CardContent className="mt-4">
-    <div className="space-y-8">
-      
-      {assessment.assessedBy && (
-        <div className="flex items-start gap-4 border-l-4 border-blue-500 pl-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-            1
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-blue-50 text-blue-800">
-                Assessed By (ຜູ້ກອກເອກະສານ)
-              </Badge>
-              <span className="font-medium">{assessment.assessedBy.fullName || assessment.assessedBy.username}</span>
-              <span className="text-sm text-gray-500 ml-auto">{fmtDate(assessment.createdAt || assessment.assessedAt)}</span>
-            </div>
-            <p className="mt-1 text-gray-700">{assessment.preparerComments || 'ບໍ່ມີຄຳເຫັນ'}</p>
-            {assessment.assessedBy.signatureUrl && (
-              <div className="bg-transparent inline-block">
-                <img
-                  src={`${Url.base_url.replace(/\/api$/, '')}${assessment.assessedBy.signatureUrl}?t=${Date.now()}`}
-                  alt="Assessed By Signature"
-                  className="h-16 mt-2 object-contain border border-gray-300 rounded bg-transparent"
-                  onError={(e) => {
-                    console.error("AssessedBy Signature load failed:", e.target.src);
-                    e.target.src = "https://via.placeholder.com/150?text=Signature+Not+Found";
-                  }}
-                />
-              </div>
-              
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* 2-4. Verifier, DCO, CEO จาก approvalHistory */}
-      {assessment.approvalHistory?.map((hist, index) => (
-        <div key={hist.id} className="flex items-start gap-4 border-l-4 border-blue-500 pl-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-            {index + 2}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Badge variant={
-                hist.level === 'CEO' ? 'default' :
-                hist.level === 'DCO' ? 'secondary' :
-                'outline'
-              }>
-                {hist.level}
-              </Badge>
-              <span className="font-medium">{hist.approver?.fullName || hist.approver?.username}</span>
-              <span className="text-sm text-gray-500 ml-auto">{fmtDate(hist.approvedAt)}</span>
-            </div>
-            <p className="mt-1 text-gray-700">{hist.comments || 'ບໍ່ມີຄຳເຫັນ'}</p>
-            {hist.approver?.signatureUrl && (
-              <div className="bg-transparent inline-block">
-                <img
-                  src={`${Url.base_url.replace(/\/api$/, '')}${hist.approver.signatureUrl}?t=${Date.now()}`}
-                  alt={`${hist.level} Signature`}
-                  className="h-16 mt-2 object-contain border border-gray-300 rounded bg-transparent"
-                  onError={(e) => {
-                    console.error(`${hist.level} Signature load failed:`, e.target.src);
-                    e.target.src = "https://via.placeholder.com/150?text=Signature+Not+Found";
-                  }}
-                />
+
+          <Card className="border-none shadow-sm">
+            <CardHeader className="bg-gray-50">
+              <CardTitle>ປະຫວັດການປະເມີນການ</CardTitle>
+            </CardHeader>
+            <CardContent className="mt-4">
+              <div className="space-y-8">
+
+                {assessment.assessedBy&&(
+                  <div className="flex items-start gap-4 border-l-4 border-blue-500 pl-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                      1
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-800">
+                          Assessed By (ຜູ້ກອກເອກະສານ)
+                        </Badge>
+                        <span className="font-medium">{assessment.assessedBy.fullName||assessment.assessedBy.username}</span>
+                        <span className="text-sm text-gray-500 ml-auto">{fmtDate(assessment.createdAt||assessment.assessedAt)}</span>
+                      </div>
+                      <p className="mt-1 text-gray-700">{assessment.preparerComments||'ບໍ່ມີຄຳເຫັນ'}</p>
+                      {assessment.assessedBy.signatureUrl&&(
+                        <div className="bg-transparent inline-block">
+                          <img
+                            src={`${Url.base_url.replace(/\/api$/,'')}${assessment.assessedBy.signatureUrl}?t=${Date.now()}`}
+                            alt="Assessed By Signature"
+                            className="h-16 mt-2 object-contain border border-gray-300 rounded bg-transparent"
+                            onError={(e) => {
+                              console.error("AssessedBy Signature load failed:",e.target.src);
+                              e.target.src="https://via.placeholder.com/150?text=Signature+Not+Found";
+                            }}
+                          />
+                        </div>
+
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2-4. Verifier, DCO, CEO จาก approvalHistory */}
+                {assessment.approvalHistory?.map((hist,index) => (
+                  <div key={hist.id} className="flex items-start gap-4 border-l-4 border-blue-500 pl-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                      {index+2}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          hist.level==='CEO'? 'default':
+                            hist.level==='DCO'? 'secondary':
+                              'outline'
+                        }>
+                          {hist.level}
+                        </Badge>
+                        <span className="font-medium">{hist.approver?.fullName||hist.approver?.username}</span>
+                        <span className="text-sm text-gray-500 ml-auto">{fmtDate(hist.approvedAt)}</span>
+                      </div>
+                      <p className="mt-1 text-gray-700">{hist.comments||'ບໍ່ມີຄຳເຫັນ'}</p>
+                      {hist.approver?.signatureUrl&&(
+                        <div className="bg-transparent inline-block">
+                          <img
+                            src={`${Url.base_url.replace(/\/api$/,'')}${hist.approver.signatureUrl}?t=${Date.now()}`}
+                            alt={`${hist.level} Signature`}
+                            className="h-16 mt-2 object-contain border border-gray-300 rounded bg-transparent"
+                            onError={(e) => {
+                              console.error(`${hist.level} Signature load failed:`,e.target.src);
+                              e.target.src="https://via.placeholder.com/150?text=Signature+Not+Found";
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  </CardContent>
-</Card>
+            </CardContent>
+          </Card>
 
           {/* 5. สรุปทางการเงิน (Financial Summary) */}
           <Card className="border-none shadow-sm">
@@ -293,7 +293,7 @@ const FullLoanReport = () => {
                   </TableRow>
                   <TableRow className="bg-gray-50">
                     <TableCell className="font-bold">ຍອດຄົງເຫຼືອ (ຖ້າມີ)</TableCell>
-                    <TableCell className="text-right font-bold text-blue-700">{fmtMoney(loan.loanAmountRequested - (loan.payments?.reduce((s, p) => s + p.amount, 0) || 0))}</TableCell>
+                    <TableCell className="text-right font-bold text-blue-700">{fmtMoney(loan.loanAmountRequested-(loan.payments?.reduce((s,p) => s+p.amount,0)||0))}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
