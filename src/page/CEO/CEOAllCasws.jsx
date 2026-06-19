@@ -119,7 +119,7 @@ const CEoAllCasws = () => {
           {[
             { label: "ທັງໝົດ", value: stats.total || 0, color: "text-orange-600" },
             { label: "PENDING", value: stats.pending || 0, color: "text-yellow-600" },
-            { label: "ລໍຖ້າ Verifier", value: stats.pendingVerifier || 0, color: "text-blue-600" },
+            { label: "REJECT", value: stats.reject || 0, color: "text-blue-600" },
             { label: "RETURNED", value: stats.returned || 0, color: "text-red-600" },
             { label: "APPROVED", value: stats.approved || 0, color: "text-green-600" },
           ].map((stat, i) => (

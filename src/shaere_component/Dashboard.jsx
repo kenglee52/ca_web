@@ -10,6 +10,16 @@ import {
 
 const COLORS = ['#10B981', '#3B82F6', '#EF4444', '#F59E0B'];
 
+const COLORS_STATUS = [
+  '#F59E0B', // PENDING     -> ເຫຼືອງ (ລໍຖ້າດຳເນີນ)
+  '#10B981', // APPROVED    -> ຂຽວ (ສຳເລັດ/ອະນຸມັດ)
+  '#06B6D4', // DISBURSED   -> ຟ້າ (ເບີກຈ່າຍແລ້ວ)
+  '#6B7280', // CLOSED      -> ເທົາ (ປິດສັນຍາ)
+  '#F97316', // OVERDUE     -> ສົ້ມ (ຄ້າງຊຳລະ)
+  '#8B5CF6', // RETURNED    -> ມ່ວງ (ສົ່ງກັບແກ້ໄຂ)
+  '#EF4444', // REJECTED    -> ແດງ (ປະຕິເສດ)
+];
+
 const Dashboard = () => {
     const [loanTypes, setLoanTypes] = useState([]);
     const [approvalStatus, setApprovalStatus] = useState([]);
@@ -105,7 +115,7 @@ const Dashboard = () => {
                             <PieChart>
                                 <Pie data={approvalStatus} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={110} innerRadius={60} label>
                                     {approvalStatus.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={COLORS_STATUS[index % COLORS_STATUS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip />
@@ -147,7 +157,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Composed 1: แนวโน้มตามประเภทสินเชื่อ */}
                 <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 className="text-xl font-semibold mb-6 text-center">ແນວໂນ້ມຄຳຂໍກູ້ລາຍເດືອນ (ແยกປະເພດ)</h2>
+                    <h2 className="text-xl font-semibold mb-6 text-center">ແນວໂນ້ມຄຳຂໍກູ້ລາຍເດືອນ (ແຍກປະເພດ)</h2>
                     <div className="h-80">
                         <ResponsiveContainer>
                             <ComposedChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -157,9 +167,9 @@ const Dashboard = () => {
                                 <Tooltip />
                                 <Legend />
                                 <Area type="monotone" dataKey="total" fill="#8884d8" stroke="#8884d8" fillOpacity={0.3} name="ທັງໝົດ" />
-                                <Bar dataKey="PERSONAL_SALARY_GUARANTEE" fill="#FF6B6B" name="ເງິນເດືອນຄຳສັນໃບບໍລິສັດ" />
-                                <Bar dataKey="PERSONAL_WITH_COLLATERAL" fill="#4ECDC4" name="ມີລະບຽບຄຳສັນ" />
-                                <Bar dataKey="BUSINESS" fill="#45B7D1" name="ທ່ານສະເໜີໃນການເຊື່ອມຕໍ່" />
+                                <Bar dataKey="PERSONAL_SALARY_GUARANTEE" fill="#FF6B6B" name="ສິນເຊື່ອບຸກຄົນທີ່ມີເງີນເດືອນຄໍ້າປະກັນ" />
+                                <Bar dataKey="PERSONAL_WITH_COLLATERAL" fill="#4ECDC4" name="ສິນເຊື່ອບຸກຄົນທີ່ມີຫຼັກຊັບຄໍ້າປະກັນ" />
+                                <Bar dataKey="BUSINESS" fill="#45B7D1" name="ສິນເຊື່ອທຸລະກິດ" />
                                 <Line type="monotone" dataKey="total" stroke="#ff7300" strokeWidth={2} name="ແນວໂນ້ມທັງໝົດ" dot={{ r: 4 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
@@ -168,7 +178,7 @@ const Dashboard = () => {
 
                 {/* Composed 2: แนวโน้มตามสถานะอนุมัติ */}
                 <div className="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 className="text-xl font-semibold mb-6 text-center">ແນວໂນ້ມຄຳຂໍກູ້ລາຍເດືອນ (ແยกສະຖານະ)</h2>
+                    <h2 className="text-xl font-semibold mb-6 text-center">ແນວໂນ້ມຄຳຂໍກູ້ລາຍເດືອນ (ແຍກສະຖານະ)</h2>
                     <div className="h-80">
                         <ResponsiveContainer>
                             <ComposedChart data={monthlyApprovalData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
