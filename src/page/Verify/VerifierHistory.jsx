@@ -119,7 +119,7 @@ const VerifierHistory = () => {
           <Card className="shadow-sm hover:shadow-md transition-shadow opacity-70">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-blue-600 font-medium">ລໍຖ້າກວດສອບ</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{stats.pendingVerifier || 0}</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{stats.pending || 0}</p>
             </CardContent>
           </Card>
 

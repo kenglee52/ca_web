@@ -2,633 +2,434 @@
 import ExcelJS from 'exceljs';
 
 // ຟັງຊັນຈັດຮູບແບບຕົວເລກເງິນ
-export const fmtMoney = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0';
+export const fmtMoney=(num) => {
+  if(num===null||num===undefined||isNaN(num)) return '0';
   return Number(num).toLocaleString('lo-LA');
 };
 
 // ຟັງຊັນຈັດຮູບແບບວັນທີ
-export const fmtDate = (date) => {
-  if (!date) return '-';
-  return new Date(date).toLocaleString('lo-LA', { dateStyle: 'medium', timeStyle: 'short' });
+export const fmtDate=(date) => {
+  if(!date) return '-';
+  return new Date(date).toLocaleString('lo-LA',{dateStyle: 'medium',timeStyle: 'short'});
 };
 
 // ຟັງຊັນຈັດຮູບແບບວັນທີແບບສັ້ນ (ສະເພາະວັນທີ)
-export const fmtDateShort = (date) => {
-  if (!date) return '-';
+export const fmtDateShort=(date) => {
+  if(!date) return '-';
   return new Date(date).toLocaleDateString('lo-LA');
 };
 
 // ==========================================
 // 1. ຟັງຊັນ EXPORT EXCEL (ຮູບແບບຕາມ PDF ເປະ)
 // ==========================================
-export const exportToExcel = async (reportData, fileName = 'loan-report') => {
-  if (!reportData || !reportData.data) return;
+export const exportToExcel=async (reportData,fileName='loan-report') => {
+  if(!reportData||!reportData.data) return;
 
-  const { data: loan } = reportData;
-  const borrower = loan.borrower || {};
-  const assessment = loan.assessment || {};
+  const {data: loan}=reportData;
+  const borrower=loan.borrower||{};
+  const assessment=loan.assessment||{};
+  const businessIncomes=borrower.businessIncomes||[];
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Loan Assessment Report');
+  const workbook=new ExcelJS.Workbook();
+  const worksheet=workbook.addWorksheet('Loan Assessment Report');
 
-  // ກຳນົດຄວາມກວ້າງຂອງ Column ໃຫ້ເໝາະສົມກັບຟອມ
-  worksheet.columns = [
-    { width: 70 }, // A
-    { width: 70 }, // B
-    { width: 70 }, // C
-    { width: 70 }, // D
+  // 5 ຄໍລໍາ (A,B,C,D,E) - ສ່ວນ 2-column ຈະ merge B:E ເປັນ value ດຽວ,
+  // ສ່ວນ 4-column ຈະ merge D:E ເປັນ value2 ເພື່ອໃຫ້ Preparer/Approver (5 ຖັນແທ້) ສະເໝີກັນກັບສ່ວນອື່ນ
+  worksheet.columns=[
+    {width: 45}, // A - label
+    {width: 30}, // B - value / label2
+    {width: 45}, // C - label2 (4-col mode) / value continuation
+    {width: 30}, // D - value2 (start) / signature col in Preparer section
+    {width: 30}, // E - value continuation / comments col in Preparer section
   ];
 
   // Colors
-  const darkBlue = 'FF1F4E78';
-  const lightBlue = 'FFD9E1F2';
-  const lightOrange = 'FFFED8B1';
-  const white = 'FFFFFFFF';
-  const gray = 'FFF0F0F0';
+  const darkBlue='FF1F4E78';
+  const lightBlue='FFD9E1F2';
+  const lightOrange='FFFED8B1';
+  const white='FFFFFFFF';
+  const gray='FFF0F0F0';
 
-  // Styles ເຮັດວຽກຮ່ວມກັນ
-  const titleStyle = {
-    font: { name: 'Noto Sans Lao', size: 16, bold: true, color: { argb: white } },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: darkBlue } },
-    alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+  const titleStyle={
+    font: {name: 'Noto Sans Lao',size: 16,bold: true,color: {argb: white}},
+    fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: darkBlue}},
+    alignment: {horizontal: 'center',vertical: 'center',wrapText: true}
   };
 
-  const sectionHeaderStyle = {
-    font: { name: 'Noto Sans Lao', size: 11, bold: true, color: { argb: white } },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: darkBlue } },
-    alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+  const subTitleStyle={
+    font: {name: 'Noto Sans Lao',size: 11,bold: true,color: {argb: darkBlue}},
+    alignment: {horizontal: 'center',vertical: 'center',wrapText: true}
   };
 
-  const labelStyle = {
-    font: { name: 'Noto Sans Lao', size: 10, bold: true },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: lightBlue } },
-    alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+  const sectionHeaderStyle={
+    font: {name: 'Noto Sans Lao',size: 11,bold: true,color: {argb: white}},
+    fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: darkBlue}},
+    alignment: {horizontal: 'left',vertical: 'center',wrapText: true}
   };
 
-  const valueStyle = {
-    font: { name: 'Noto Sans Lao', size: 10 },
-    alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+  const labelStyle={
+    font: {name: 'Noto Sans Lao',size: 10,bold: false},
+    fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: lightBlue}},
+    alignment: {horizontal: 'left',vertical: 'center',wrapText: true}
   };
 
-  const valueLabelStyle = {
-    font: { name: 'Noto Sans Lao', size: 10 },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } },
-    alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+  const valueStyle={
+    font: {name: 'Noto Sans Lao',size: 10},
+    alignment: {horizontal: 'left',vertical: 'center',wrapText: true}
   };
 
-  const orangeHighlightStyle = {
-    font: { name: 'Noto Sans Lao', size: 10, bold: true },
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: lightOrange } },
-    alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+  const valueRightStyle={
+    font: {name: 'Noto Sans Lao',size: 10},
+    alignment: {horizontal: 'right',vertical: 'center',wrapText: true}
   };
 
-  const borderThin = {
-    top: { style: 'thin', color: { argb: 'FF000000' } },
-    left: { style: 'thin', color: { argb: 'FF000000' } },
-    bottom: { style: 'thin', color: { argb: 'FF000000' } },
-    right: { style: 'thin', color: { argb: 'FF000000' } }
+  const orangeHighlightStyle={
+    font: {name: 'Noto Sans Lao',size: 10,bold: true},
+    fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: lightOrange}},
+    alignment: {horizontal: 'left',vertical: 'center',wrapText: true}
   };
 
-  // --- PAGE 1: HEADER ---
-  const titleRow = worksheet.addRow(['ແບບຟອມການປະເມີນເງິນກູ້ / Loan Assessment Tool']);
-  titleRow.height = 25;
-  const titleCell = titleRow.getCell(1);
-  titleCell.style = titleStyle;
-  worksheet.mergeCells('A1:D1');
+  const subHeaderRowStyle={
+    font: {name: 'Noto Sans Lao',size: 10,bold: true},
+    fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: gray}},
+    alignment: {horizontal: 'left',vertical: 'center',wrapText: true}
+  };
 
-  // Row ສະກາວ
-  worksheet.addRow(['']);
-  worksheet.addRow(['ຜູ້ກູ້ລາຍດຽວ', 'ເລກທີ່ຜູ້ກູ້']);
+  const borderThin={
+    top: {style: 'thin',color: {argb: 'FF000000'}},
+    left: {style: 'thin',color: {argb: 'FF000000'}},
+    bottom: {style: 'thin',color: {argb: 'FF000000'}},
+    right: {style: 'thin',color: {argb: 'FF000000'}}
+  };
 
-  // --- SECTION 1: KEY SUMMARY ---
-  const s1Row = worksheet.addRow([]);
-  worksheet.mergeCells(`A${s1Row.number}:D${s1Row.number}`);
-  s1Row.getCell(1).value = 'I. ສະຫຼຸບໂດຍຫຍໍ້ຂໍ້ມູນຫຼັກ / Key Summary';
-  s1Row.getCell(1).style = sectionHeaderStyle;
-  s1Row.height = 20;
+  let r=0; // running row tracker for merges
 
-  const summaryData = [
-    [
-      { label: 'ຊື່ຜູ້ກູ້ຢືມ / Bor. Name', value: `${borrower.laoFirstName || ''}${borrower.laoFirstName && borrower.laoLastName ? ' ' : ''}${borrower.laoLastName || ''}` },
-      { label: 'ປະຫວັດການຊຳລະເງິນ / Credit History', value: loan.creditHistoryGrade || 'N/A' }
-    ],
-    [
-      { label: 'ປະເພດຜູ້ກູ້ຢືມ / Type Bor', value: 'ບຸກຄົນ / Individual' },
-      { label: 'ອັດຕາດອກເບ້ຍ / Inter. Rate', value: `${loan.interestRatePa || 0}% ຕໍ່ປີ / 1.65% ຕໍ່ເດືອນ` }
-    ],
-    [
-      { label: 'ປະເພດເງິນກູ້ / Type of Loan', value: 'ເງິນກູ້ສ່ວນບຸກຄົນແບບບໍ່ມີຫຼັກຊັບ / (Salary Guarantee)' },
-      { label: 'ອັດຕາສ່ວນລາຍຮັບຕໍ່ໜີ້ສິນ / (DSR)', value: `${assessment.dtiRatio || 0}%`, highlight: true }
-    ],
-    [
-      { label: 'ປະເພດລູກຄ້າ / Type of Customer', value: loan.customerType === 'NEW' ? 'ລູກຄ້າໃໝ່ / New Cus.' : 'ລູກຄ້າເກົ່າ' },
-      { label: 'ກໍານົດລາຍຮັບຕໍ່ໜີ້ສິນ / DSR Threshold', value: `${assessment.dtiThreshold || 60}%`, highlight: true }
-    ],
-    [
-      { label: 'ຈຸດປະສົງການກູ້ເງິນ / Loan Purpose', value: loan.loanPurpose || '-' },
-      { label: 'ອັດຕາສ່ວນມູນຄ່າຫຼັກຊັບຕໍ່ວົງເງິນ / (LTV)', value: 'N/A' }
-    ],
-    [
-      { label: 'ຈໍານວນວົງເງິນກູ້ / Loan Size', value: `${fmtMoney(loan.loanAmountRequested)} LAK`, bold: true },
-      { label: 'ກໍານົດມູນຄ່າຫຼັກຊັບຕໍ່ວົງເງິນ / LTV Threshold', value: '0%' }
-    ],
-    [
-      { label: 'ຮູບແບບການສໍາລະ / Repayment Mode', value: loan.repaymentMode || 'Flat rate' },
-      { label: 'ງວດຈ່າຍຂອງເງິນກູ້ FINA ທີ່ຂໍປັດຈຸບັນ / Install. Amt', value: `${fmtMoney(assessment.installmentAmount)} LAK`, bold: true }
-    ],
-    [
-      { label: 'ໄລຍະເວລາ / Term', value: `${loan.termMonths || 0} ເດືອນ` },
-      { label: 'ຄ່າທໍານຽມເງິນກູ້ / Proce. Fees', value: `${fmtMoney(assessment.processingFeeAmount || 0)} LAK` }
-    ]
-  ];
+  // --- TITLE ---
+  const titleRow=worksheet.addRow(['ແບບຟອມການປະເມີນເງິນກູ້/Loan Assessment Tool']);
+  titleRow.height=25;
+  titleRow.getCell(1).style=titleStyle;
+  worksheet.mergeCells(`A${titleRow.number}:E${titleRow.number}`);
 
-  summaryData.forEach(rowData => {
-    const row = worksheet.addRow([
-      rowData[0].label,
-      rowData[0].value,
-      rowData[1].label,
-      rowData[1].value
-    ]);
-    
-    // Cell A - Label
-    const cellA = row.getCell(1);
-    cellA.style = { ...labelStyle, border: borderThin };
-    
-    // Cell B - Value
-    const cellB = row.getCell(2);
-    cellB.style = {
-      ...valueStyle,
+  // --- SUB TITLE (2 ແຖວ ກາງ) ---
+  const loanTypeLabel=loan.loanType==='PERSONAL_SALARY_GUARANTEE'
+    ? 'ເງິນກູ້ສ່ວນບຸກຄົນແບບບໍ່ມີຫຼັກຊັບ/ (Salary Guarantee)'
+    :(loan.loanPurpose||'ເງິນກູ້ສ່ວນບຸກຄົນ');
+  const sub1=worksheet.addRow(['ເງິນກູ້ສ່ວນບຸກຄົນ']);
+  sub1.getCell(1).style=subTitleStyle;
+  worksheet.mergeCells(`A${sub1.number}:E${sub1.number}`);
+  const sub2=worksheet.addRow(['ເງິນກູ້ພະນັກງານໃນເຄືອ I.']);
+  sub2.getCell(1).style=subTitleStyle;
+  worksheet.mergeCells(`A${sub2.number}:E${sub2.number}`);
+
+  // helper: ສ້າງແຖວ 2-column (label | value ໂດຍ value merge B:E)
+  const addTwoColRow=(label,value,opts={}) => {
+    const row=worksheet.addRow([label,value,'','','']);
+    worksheet.mergeCells(`B${row.number}:E${row.number}`);
+    row.getCell(1).style={...labelStyle,border: borderThin};
+    row.getCell(2).style={
+      ...(opts.right? valueRightStyle:valueStyle),
       border: borderThin,
-      fill: rowData[0].bold ? { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } } : undefined
+      fill: opts.highlight
+        ? {type: 'pattern',pattern: 'solid',fgColor: {argb: lightOrange}}
+        :opts.bold
+          ? {type: 'pattern',pattern: 'solid',fgColor: {argb: gray}}
+          :undefined,
+      font: (opts.highlight||opts.bold)
+        ? {name: 'Noto Sans Lao',size: 10,bold: true}
+        :{name: 'Noto Sans Lao',size: 10}
     };
-    if (rowData[0].bold) cellB.font = { name: 'Noto Sans Lao', size: 10, bold: true };
-    
-    // Cell C - Label
-    const cellC = row.getCell(3);
-    cellC.style = { ...labelStyle, border: borderThin };
-    
-    // Cell D - Value
-    const cellD = row.getCell(4);
-    cellD.style = {
-      ...valueStyle,
-      border: borderThin,
-      fill: rowData[1].highlight ? { type: 'pattern', pattern: 'solid', fgColor: { argb: lightOrange } } : undefined
-    };
-    if (rowData[1].highlight) cellD.font = { name: 'Noto Sans Lao', size: 10, bold: true };
-  });
+    row.getCell(3).style={border: borderThin};
+    row.getCell(4).style={border: borderThin};
+    row.getCell(5).style={border: borderThin};
+    if(opts.height) row.height=opts.height;
+    return row;
+  };
 
-  // --- SECTION 2: BORROWER DATA ---
+  // helper: ສ້າງແຖວ 4-column (label1|value1|label2|value2)
+  const addFourColRow=(l1,v1,l2,v2,opts={}) => {
+    const row=worksheet.addRow([l1,v1,l2,v2,'']);
+    worksheet.mergeCells(`D${row.number}:E${row.number}`);
+    row.getCell(1).style={...labelStyle,border: borderThin};
+    row.getCell(2).style={
+      ...(opts.right1? valueRightStyle:valueStyle),border: borderThin,
+      fill: opts.highlight1? {type: 'pattern',pattern: 'solid',fgColor: {argb: lightOrange}}:undefined,
+      font: opts.highlight1? {name: 'Noto Sans Lao',size: 10,bold: true}:{name: 'Noto Sans Lao',size: 10}
+    };
+    row.getCell(3).style={...labelStyle,border: borderThin};
+    row.getCell(4).style={
+      ...(opts.right2? valueRightStyle:valueStyle),border: borderThin,
+      fill: opts.highlight2? {type: 'pattern',pattern: 'solid',fgColor: {argb: lightOrange}}:undefined,
+      font: opts.highlight2? {name: 'Noto Sans Lao',size: 10,bold: true}:{name: 'Noto Sans Lao',size: 10}
+    };
+    row.getCell(5).style={border: borderThin};
+    return row;
+  };
+
+  const addSectionHeader=(title) => {
+    const row=worksheet.addRow([title,'','','','']);
+    worksheet.mergeCells(`A${row.number}:E${row.number}`);
+    row.getCell(1).style=sectionHeaderStyle;
+    row.height=20;
+    return row;
+  };
+
+  // ===================== SECTION I: KEY SUMMARY =====================
+  addSectionHeader('I. ສະຫຼຸບໂດຍຫຍໍ້ຂໍ້ມູນຫຼັກ/Key Summary');
+
+  addTwoColRow('ຊື່ຂອງຜູ້ກູ້ຢືມ/Bor. Name',
+    `${borrower.title||''} ${borrower.laoFirstName||''} ${borrower.laoLastName||''}`.trim());
+  addTwoColRow('ປະເພດຜູ້ກູ້/Type Bor.','ບຸກຄົນ/Individual');
+  addTwoColRow('ປະເພດເງິນກູ້/Type of Loan',loanTypeLabel);
+  addTwoColRow('ປະເພດລູກຄ້າ/Type of Customer',
+    loan.customerType==='NEW'? 'ລູກຄ້າໃໝ່/ New Cus.':'ລູກຄ້າເກົ່າ/ Existing Cus.');
+  addTwoColRow('ຈຸດປະສົງການກູ້ເງິນ/Loan Purpose',loan.loanPurpose||'-');
+  addTwoColRow('ຈໍານວນວົງເງິນກູ້/Loan Size',fmtMoney(loan.loanAmountRequested),{right: true});
+  addTwoColRow('ຮູບແບບການຊໍາລະ/Repayment Mode',loan.repaymentMode||'Flat rate');
+  addTwoColRow('ໄລຍະເວລາ/Term',`${loan.termMonths||0} ເດືອນ`);
+  addTwoColRow('ປະຫວັດການຊໍາລະເງິນກູ້/Credit History',
+    `ລູກຄ້າເກຣດ ${loan.creditHistoryGrade||'N/A'}/ Grade ${loan.creditHistoryGrade||'N/A'}`);
+  addTwoColRow('ອັດຕາດອກເບ້ຍ/Inter. Rate',
+    `${loan.interestRatePa||0}% ຕໍ່ປີ/ ${(loan.interestRatePa/12).toFixed(2)}% ຕໍ່ເດືອນ`);
+  addTwoColRow('ອັດຕາສ່ວນລາຍຮັບຕໍ່ໜີ້ສິນ/(DSR)',`${assessment.dtiRatio||0}%`,{highlight: true});
+  addTwoColRow('ກໍານົດລາຍຮັບຕໍ່ໜີ້ສິນ/DSR Treshold',`${assessment.dtiThreshold||60}%`);
+  addTwoColRow('ອັດຕາສ່ວນມູນຄ່າຫຼັກຊັບຕໍ່ວົງເງິນ/(LTV)',assessment.ltvRatio||'N/A');
+  addTwoColRow('ກໍານົດມູນຄ່າຫຼັກຊັບຕໍ່ວົງເງິນ/LTV Treshold',`${assessment.ltvThreshold||0}%`);
+  addTwoColRow('ງວດຈ່າຍຂອງເງິນກູ້ FINA ທີ່ຂໍປະຈຸບັນ/Install. Amt',
+    fmtMoney(assessment.installmentAmount),{right: true});
+  addTwoColRow('ຄ່າທໍານຽມເງິນກູ້/Proce. Fees',
+    fmtMoney(assessment.processingFeeAmount),{right: true});
+  addTwoColRow('ດອກເບ້ຍໄດ້ຮັບທັງໝົດ/Total Inter. Rate Amt',
+    fmtMoney(assessment.totalInterest),{right: true});
+  addTwoColRow('ຈໍານວນຕົ້ນທຶນ + ດອກເບ້ຍ/Total P+I Amt',
+    fmtMoney(assessment.totalPrincipalPlusInterest),{right: true});
+  addTwoColRow('ຄ່າທໍານຽມປະເມີນຫຼັກຊັບ/Coll. Fees',
+    fmtMoney(loan.collateralFeeAmount||0),{right: true});
+
+  // ===================== SECTION II: BORROWER DATA =====================
   worksheet.addRow([]);
-  const s2Row = worksheet.addRow([]);
-  worksheet.mergeCells(`A${s2Row.number}:D${s2Row.number}`);
-  s2Row.getCell(1).value = 'II. ຂໍ້ມູນຜູ້ກູ້ / Borrower Data';
-  s2Row.getCell(1).style = sectionHeaderStyle;
-  s2Row.height = 20;
+  addSectionHeader('II. ຂໍ້ມູນຜູ້ກູ້/Borrower Data');
 
-  const borrowerData = [
-    [
-      { label: 'ຊື່ ແລະ ນາມສະກຸນຜູ້ກູ້ຫຼັກ / Bor. Name', value: `${borrower.laoFirstName || ''} ${borrower.laoLastName || ''}` },
-      { label: 'ເມືອງ / District', value: 'ເມືອງໄຊທານີ' }
-    ],
-    [
-      { label: 'ເອກະສານຢັ້ງຢືນ / Type Certificate', value: borrower.certificateType || 'FAMILY BOOK' },
-      { label: 'ແຂວງ / Province', value: 'ນະຄອນຫຼວງວຽງຈັນ' }
-    ],
-    [
-      { label: 'ເລກທີ / Certificate No.', value: borrower.certificateNo || '' },
-      { label: 'ຮ້ານຄ້າ / Name of Employer', value: borrower.employerName || '' }
-    ],
-    [
-      { label: 'Age (Year)', value: borrower.age || '' },
-      { label: 'ຕໍາແໜ່ງ / Position', value: borrower.position || '' }
-    ],
-    [
-      { label: 'ສະຖານະພາບການແຕ່ງງານ / Marital Status', value: borrower.maritalStatus || 'Single' },
-      { label: 'ເລກທະບຽນວິສາຫະກິດ / Business Reg No.', value: borrower.businessRegistrationNumber || 'N/A' }
-    ],
-    [
-      { label: 'ສັນຊາດ / Nationality', value: borrower.nationality || 'Lao' },
-      { label: 'ຢູ່ບ່ອນເຮັດວຽກ / Village', value: borrower.companyVillage || '' }
-    ],
-    [
-      { label: 'ລະດັບການສຶກສາ / Education', value: borrower.education || '' },
-      { label: 'ເມືອງ / District', value: 'ເມືອງອຸທຸມພອນ' }
-    ],
-    [
-      { label: 'ອາຊີບ / Occupation', value: borrower.occupation || '' },
-      { label: 'ແຂວງ / Province', value: 'ສະຫວັນນະເຂດ' }
-    ],
-    [
-      { label: 'Phone No.', value: borrower.phone || '' },
-      { label: 'ສາຍພົວພັນກັບ FINA / Relationship with FINA', value: borrower.relationshipWithFina || 'NO' }
-    ],
-    [
-      { label: 'ບ້ານຢູ່ປະຈຸບັນ / Village', value: borrower.village || '' },
-      { label: 'ລາຍຮັບຕໍ່ເດືອນ (ເງິນເດືອນ) / Salary', value: `${fmtMoney(borrower.monthlySalary)} LAK`, bold: true }
-    ]
-  ];
+  addTwoColRow('ຊື່ ແລະ ນາມສະກຸນຜູ້ກູ້ຫຼັກ/Bor. Name',
+    `${borrower.title||''} ${borrower.laoFirstName||''} ${borrower.laoLastName||''}`.trim());
+  addTwoColRow('ເອກະສານຢັ້ງຢືນ/Type Certificate',borrower.certificateType||'');
+  addTwoColRow('ເລກທີ/Certificate No.',borrower.certificateNo||'');
+  addTwoColRow('Age (Year)',borrower.age||'');
+  addTwoColRow('ສະຖານະພາບການແຕ່ງງານ/Marital Status',borrower.maritalStatus||'');
+  addTwoColRow('ສັນຊາດ/Nationality',borrower.nationality||'');
+  addTwoColRow('ລະດັບການສຶກສາ/Education',borrower.education||'');
+  addTwoColRow('ອາຊີບ/Occupation',borrower.occupation||'');
+  addTwoColRow('ເບີຕິດຕໍ່/Phone No.',borrower.phone||'');
+  addTwoColRow('ບ້ານຢູ່ປະຈຸບັນ/Village',borrower.village||'');
+  addTwoColRow('ເມືອງ/District',borrower.district?.name||'');
+  addTwoColRow('ແຂວງ/Province',borrower.district.province?.name||'');
+  addTwoColRow('ຊື່ຮ້ານຄ້າ/Name of Employer',borrower.employerName||'');
+  addTwoColRow('ຕໍາແໜ່ງ/Position',borrower.position||'');
+  addTwoColRow('ເລກທະບຽນວິສາຫະກິດ/Business Registration Number',borrower.businessRegistrationNumber||'');
+  addTwoColRow('ທີ່ຢູ່ບ່ອນເຮັດວຽກ/Village',borrower.companyVillage||'');
+  addTwoColRow('ເມືອງ/District',borrower.companyDistrict?.name||'');
+  addTwoColRow('ແຂວງ/Province',borrower.companyProvince?.name||'');
+  addTwoColRow('ສາຍພົວພັນກັບ FINA/Relationship with FINA',borrower.relationshipWithFina||'NO');
+  addTwoColRow('ລາຍຮັບຕໍ່ເດືອນ (ເງິນເດືອນ): Salary',fmtMoney(borrower.monthlySalary),{right: true,bold: true});
+  addTwoColRow('ລາຍຈ່າຍຕໍ່ເດືອນ/Household Expense',fmtMoney(borrower.householdExpense),{right: true});
 
-  borrowerData.forEach(rowData => {
-    const row = worksheet.addRow([
-      rowData[0].label,
-      rowData[0].value,
-      rowData[1].label,
-      rowData[1].value
-    ]);
-    
-    row.getCell(1).style = { ...labelStyle, border: borderThin };
-    row.getCell(2).style = {
-      ...valueStyle,
-      border: borderThin,
-      fill: rowData[0].bold ? { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } } : undefined
-    };
-    if (rowData[0].bold) row.getCell(2).font = { name: 'Noto Sans Lao', size: 10, bold: true };
-    
-    row.getCell(3).style = { ...labelStyle, border: borderThin };
-    row.getCell(4).style = {
-      ...valueStyle,
-      border: borderThin,
-      fill: rowData[1].bold ? { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } } : undefined
-    };
-    if (rowData[1].bold) row.getCell(4).font = { name: 'Noto Sans Lao', size: 10, bold: true };
-  });
-
-  // --- SECTION 3: FINANCIAL ANALYSIS ---
+  // ===================== SECTION III: FINANCIAL ANALYSIS =====================
   worksheet.addRow([]);
-  const s3Row = worksheet.addRow([]);
-  worksheet.mergeCells(`A${s3Row.number}:D${s3Row.number}`);
-  s3Row.getCell(1).value = 'III. ວິເຄາະການເງິນ / Financial Analysis';
-  s3Row.getCell(1).style = sectionHeaderStyle;
-  s3Row.height = 20;
+  addSectionHeader('III. ວິເຄາະການເງິນ/Financial Analysis');
 
-  const financialData = [
-    [
-      { label: 'ປະເພດຂອງເອກະສານຢັ້ງຢືນລາຍຮັບ / Evidence of Income', value: borrower.evidenceOfIncomeType || 'BANK_STATEMENT' },
-      { label: 'ລາຍຮັບສຸດທິຈາກເງິນເດືອນ / Net Salary', value: `${fmtMoney(borrower.netIncome)} LAK`, bold: true }
-    ],
-    [
-      { label: 'ສະກຸນເງິນຄໍານວນ / Currency', value: 'LAK' },
-      { label: 'ລາຍຈ່າຍຄົວເຮືອນ / Household Expense', value: `${fmtMoney(borrower.householdExpense)} LAK` }
-    ],
-    [
-      { label: 'ລາຍໄດ້ຈາກການຂາຍ / Sale Revenue', value: `${fmtMoney(assessment.totalNetIncome)} LAK` },
-      { label: 'ງວດຈ່າຍເງິນກູ້ FINA ທີ່ຂໍປັດຈຸບັນ / Curr Install. to FINA', value: `${fmtMoney(assessment.currInstallToFina)} LAK`, bold: true }
-    ],
-    [
-      { label: 'ຕົ້ນທຶນຂາຍ / Cost of Sale', value: `${fmtMoney(assessment.totalInstallment)} LAK` },
-      { label: 'ງວດຈ່າຍທີ່ຢູ່ຕໍ່ FINA / Exis. Install. to FINA', value: `${fmtMoney(assessment.exisInstallToFina || 0)} LAK` }
-    ],
-    [
-      { label: 'ກຳໄລຂັ້ນຕົ້ນ / Gross Profit', value: `${fmtMoney(assessment.totalNetIncome)} LAK` },
-      { label: 'ງວດຈ່າຍໃຫ້ອົງກອນອື່ນ / Pay Install. to Other', value: `${fmtMoney(assessment.payInstallToOther)} LAK` }
-    ],
-    [
-      { label: 'ຄ່າໃຊ້ຈ່າຍດຳເນີນງານ / Oper. Exp.', value: `${fmtMoney(assessment.totalInstallment)} LAK` },
-      { label: 'ລວມງວດຈ່າຍໜີ້ທັງໝົດ / Total Installment', value: `${fmtMoney(assessment.totalInstallment)} LAK`, bold: true }
-    ],
-    [
-      { label: 'ກຳໄລສຸດທິ / Net Profit', value: `${fmtMoney(assessment.endingNetIncome)} LAK` },
-      { label: 'ລາຍຮັບລວມສຸດທິ (ທຸລະກິດ + ເງິນເດືອນ) / Total net inc', value: `${fmtMoney(assessment.totalNetIncome)} LAK` }
-    ],
-    [
-      { label: 'ລາຍໄດ້ຈາກການຂາຍ / Sale Revenue', value: `${fmtMoney(0)} LAK` },
-      { label: 'ລວມລາຍຮັບສຸດທິ (ຫຼັງຫັກ) / Ending Net Income', value: `${fmtMoney(assessment.endingNetIncome)} LAK` }
-    ],
-    [
-      { label: 'ຕົ້ນທຶນຂາຍ / Cost of Sale', value: `${fmtMoney(0)} LAK` },
-      { label: 'ລາຍຮັບຕໍ່ໜີ້ສິນ / (DSR)', value: `${assessment.dtiRatio || 0}%`, highlight: true }
-    ],
-    [
-      { label: 'ກຳໄລຂັ້ນຕົ້ນ / Gross Profit', value: `${fmtMoney(0)} LAK` },
-      { label: 'ເກນ DSR / DSR Threshold', value: `${assessment.dtiThreshold || 60}%`, highlight: true }
-    ],
-    [
-      { label: 'ຄ່າໃຊ້ຈ່າຍ / ລາຍໄດ້ (Oper. Exp./Sales)', value: '0.00%' },
-      { label: 'ມູນຄ່າຫຼັກຊັບຕໍ່ວົງເງິນ / (LTV)', value: 'N/A' }
-    ],
-    [
-      { label: 'ກຳໄລຂັ້ນຕົ້ນ / ລາຍໄດ້ (GP/Sales)', value: '30.00%' },
-      { label: 'ເກນ LTV / LTV Threshold', value: '0%' }
-    ]
-  ];
+  // ແກ້ evidenceOfIncomeType: ໃຊ້ loan ບໍ່ແມ່ນ borrower
+  addFourColRow('ປະເພດຂອງເອກະສານຢັ້ງຢືນລາຍຮັບ/Evidence of Income',loan.evidenceOfIncomeType||'',
+    'ລາຍຮັບສຸດທິຈາກເງິນເດືອນ/Net Salary',fmtMoney(borrower.netIncome),{right2: true});
+  addFourColRow('ສະກຸນເງິນຄິດໄລ່/Currency','LAK',
+    'ລາຍຈ່າຍຄົວເຮືອນ/Household Expense',fmtMoney(borrower.householdExpense),{right2: true});
 
-  financialData.forEach(rowData => {
-    const row = worksheet.addRow([
-      rowData[0].label,
-      rowData[0].value,
-      rowData[1].label,
-      rowData[1].value
-    ]);
-    
-    row.getCell(1).style = { ...labelStyle, border: borderThin };
-    row.getCell(2).style = {
-      ...valueStyle,
-      border: borderThin,
-      fill: rowData[0].bold ? { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } } : undefined
-    };
-    if (rowData[0].bold) row.getCell(2).font = { name: 'Noto Sans Lao', size: 10, bold: true };
-    
-    row.getCell(3).style = { ...labelStyle, border: borderThin };
-    row.getCell(4).style = {
-      ...valueStyle,
-      border: borderThin,
-      fill: rowData[1].highlight ? { type: 'pattern', pattern: 'solid', fgColor: { argb: lightOrange } } 
-            : rowData[1].bold ? { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } }
-            : undefined
-    };
-    if (rowData[1].highlight) row.getCell(4).font = { name: 'Noto Sans Lao', size: 10, bold: true };
-    if (rowData[1].bold && !rowData[1].highlight) row.getCell(4).font = { name: 'Noto Sans Lao', size: 10, bold: true };
-  });
+  // ທຸລະກິດທີ 1
+  const bu1=worksheet.addRow(['ຊຸດທີ 1/ 1st Bu','','','','']);
+  worksheet.mergeCells(`A${bu1.number}:E${bu1.number}`);
+  bu1.getCell(1).style={...subHeaderRowStyle,border: borderThin};
 
-  // --- SECTION 4: LOAN DATA ---
+  const biz1=businessIncomes[0]||{};
+  addFourColRow('ລາຍໄດ້ຈາກການຂາຍ/Sale Revenue',fmtMoney(biz1.saleRevenue||assessment.totalNetIncome||0),
+    'ງວດຈ່າຍເງິນກູ້ FINA ທີ່ຂໍ/Curr Install. to FINA',fmtMoney(assessment.currInstallToFina),{right1: true,right2: true});
+  addFourColRow('ຕົ້ນທຶນຂາຍ/Cost of Sale',fmtMoney(biz1.costOfSale||0),
+    'ງວດຈ່າຍທີ່ມີຢູ່ກັບ FINA/Exis. Install. to FINA',fmtMoney(assessment.exisInstallToFina||0),{right1: true,right2: true});
+  addFourColRow('ກໍາໄລຂັ້ນຕົ້ນ/Gross Profit',fmtMoney(biz1.grossProfit||0),
+    'ງວດຈ່າຍໃຫ້ອົງກອນອື່ນ/Pay Install. to Other',fmtMoney(assessment.payInstallToOther),{right1: true,right2: true});
+  addFourColRow('ຄ່າໃຊ້ຈ່າຍດໍາເນີນງານ/Oper. Exp.',fmtMoney(biz1.operExpense||0),
+    'ລວມງວດຈ່າຍໜີ້ທັງໝົດ/Total Installment',fmtMoney(assessment.totalInstallment),{right1: true,right2: true,highlight2: true});
+  addFourColRow('ກໍາໄລສຸດທິ/Net Profit',fmtMoney(biz1.netProfit||0),
+    'ລາຍຮັບລວມສຸດທິ(ທຸລະກິດ+ເງິນເດືອນ)/Total net inc',fmtMoney(assessment.totalNetIncome),{right1: true,right2: true});
+
+  // ທຸລະກິດທີ 2
+  const bu2=worksheet.addRow(['ຊຸດທີ 2/ 2nd Bu','','','','']);
+  worksheet.mergeCells(`A${bu2.number}:E${bu2.number}`);
+  bu2.getCell(1).style={...subHeaderRowStyle,border: borderThin};
+
+  const biz2=businessIncomes[1]||{};
+  addFourColRow('ລາຍໄດ້ຈາກການຂາຍ/Sale Revenue',fmtMoney(biz2.saleRevenue||0),
+    'ລວມລາຍຮັບສຸດທິ(ຫຼັງຫັກ)/Ending Net Income',fmtMoney(assessment.endingNetIncome),{right1: true,right2: true});
+  addFourColRow('ຕົ້ນທຶນຂາຍ/Cost of Sale',fmtMoney(biz2.costOfSale||0),
+    'ລາຍຮັບຕໍ່ໜີ້ສິນ/(DSR)',`${assessment.dtiRatio||0}%`,{right1: true,highlight2: true});
+  addFourColRow('ກໍາໄລຂັ້ນຕົ້ນ/Gross Profit',fmtMoney(biz2.grossProfit||0),
+    'ເກນ DSR/DSR Threshold',`${assessment.dtiThreshold||60}%`,{right1: true});
+  addFourColRow('ຄ່າໃຊ້ຈ່າຍດໍາເນີນງານ/Oper. Exp.',fmtMoney(biz2.operExpense||0),
+    'ມູນຄ່າຫຼັກຊັບຕໍ່ວົງເງິນ/(LTV)',assessment.ltvRatio||'N/A',{right1: true});
+  addFourColRow('ກໍາໄລສຸດທິ/Net Profit',fmtMoney(biz2.netProfit||0),
+    'ເກນ LTV/LTV Threshold',`${assessment.ltvThreshold||0}%`,{right1: true});
+
+  addFourColRow('ຄ່າໃຊ້ຈ່າຍ/ລາຍໄດ້(Oper. Exp./Sales)',`${assessment.operExpSalesRatio||'0.00'}%`,
+    'ຕົ້ນທຶນ/ລາຍໄດ້(COGS/Sales)',`${assessment.cogsSalesRatio||'0.00'}%`);
+  addFourColRow('ກໍາໄລຂັ້ນຕົ້ນ/ລາຍໄດ້(GP/Sales)',`${assessment.gpSalesRatio||'0.00'}%`,
+    'ລາຍໄດ້ສຸດທິ/ລາຍໄດ້(NP/Sales)',`${assessment.npSalesRatio||'0.00'}%`);
+
+  // ===================== SECTION IV: LOAN DATA =====================
   worksheet.addRow([]);
-  const s4Row = worksheet.addRow([]);
-  worksheet.mergeCells(`A${s4Row.number}:D${s4Row.number}`);
-  s4Row.getCell(1).value = 'IV. ບົດລາຍງານເງິນກູ້ / Loan Data';
-  s4Row.getCell(1).style = sectionHeaderStyle;
-  s4Row.height = 20;
+  addSectionHeader('IV. ຂໍ້ມູນວົງເງິນທີ່ສະເໜີ/Loan Data');
 
-  const loanDetailRow1 = worksheet.addRow([
-    'ປະເພດເງິນກູ້ / Type of Loan',
-    'ເງິນກູ້ສ່ວນບຸກຄົນແບບບໍ່ມີຫຼັກຊັບ / (Salary Guarantee)',
-    'ອັດຕາທໍານຽມປະເມີນ / Coll. Fees',
-    '0%'
-  ]);
-  loanDetailRow1.eachCell((cell, num) => {
-    if (num === 1 || num === 3) cell.style = { ...labelStyle, border: borderThin };
-    else cell.style = { ...valueStyle, border: borderThin };
-  });
+  const loanDetailHdr=worksheet.addRow(['ລາຍລະອຽດເງິນກູ້/Loan Detail','','','','']);
+  worksheet.mergeCells(`A${loanDetailHdr.number}:E${loanDetailHdr.number}`);
+  loanDetailHdr.getCell(1).style={...subHeaderRowStyle,border: borderThin};
 
-  const loanDetailRow2 = worksheet.addRow([
-    'ຈໍານວນວົງເງິນກູ້ / Loan Size',
-    `${fmtMoney(loan.loanAmountRequested)} LAK`,
-    'ອັດຕາທໍານຽມອື່ນ / Other Fees',
-    '0%'
-  ]);
-  loanDetailRow2.eachCell((cell, num) => {
-    if (num === 1 || num === 3) cell.style = { ...labelStyle, border: borderThin };
-    else {
-      cell.style = { ...valueStyle, border: borderThin, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: gray } } };
-      cell.font = { name: 'Noto Sans Lao', size: 10, bold: true };
-    }
-  });
+  addTwoColRow('ປະເພດເງິນກູ້/Type of Loan',loanTypeLabel);
+  addTwoColRow('ຈໍານວນວົງເງິນກູ້/Loan Size',fmtMoney(loan.loanAmountRequested),{right: true});
+  addTwoColRow('ໄລຍະເວລາ/Term',`${loan.termMonths||0} ເດືອນ`);
+  addTwoColRow('ອັດຕາດອກເບ້ຍ (ຕໍ່ປີ)/(p.a) Inter. Rate',`${loan.interestRatePa||0}%`);
+  addFourColRow('ອັດຕາຄ່າທໍານຽມເງິນກູ້/Proce. Fees',`${loan.processingFeesPercent||0}%`,
+    'ອັດຕາຄ່າທໍານຽມປະເມີນ/Coll. Fees',`${loan.collateralFeesPercent||0}%`);
+  addFourColRow('ອັດຕາຄ່າທໍານຽມປິດກ່ອນກໍານົດ/Early Settle. Fees',`${loan.earlySettleFeesPercent||0}%`,
+    'ຄ່າທໍານຽມອື່ນໆ/Other Fees',`${loan.otherFeesPercent||0}%`);
 
-  const loanDetailRow3 = worksheet.addRow([
-    'ໄລຍະເວລາ / Term',
-    `${loan.termMonths || 0} ເດືອນ`,
-    '',
-    ''
-  ]);
-  loanDetailRow3.eachCell((cell, num) => {
-    if (num === 1) cell.style = { ...labelStyle, border: borderThin };
-    else if (num === 2) cell.style = { ...valueStyle, border: borderThin };
-  });
-
-  const loanDetailRow4 = worksheet.addRow([
-    'ອັດຕາດອກເບ້ຍ (ຕໍ່ປີ) / p.a) Inter. Rate',
-    `${loan.interestRatePa}%`,
-    '',
-    ''
-  ]);
-  loanDetailRow4.eachCell((cell, num) => {
-    if (num === 1) cell.style = { ...labelStyle, border: borderThin };
-    else if (num === 2) cell.style = { ...valueStyle, border: borderThin };
-  });
-
-  const loanDetailRow5 = worksheet.addRow([
-    'ອັດຕາຄ່າທໍານຽມເງິນກູ້ / Proce. Fees',
-    `${loan.processingFeesPercent || 0}%`,
-    'ອັດຕາທໍານຽມເງິນກູ້ / Coll. Fees',
-    `${loan.collateralFeesPercent || 0}%`
-  ]);
-  loanDetailRow5.eachCell((cell, num) => {
-    if (num === 1 || num === 3) cell.style = { ...labelStyle, border: borderThin };
-    else cell.style = { ...valueStyle, border: borderThin };
-  });
-
-  // Add fee summary row before conditions
-  const feeRow = worksheet.addRow([
-    'ອັດຕາທໍານຽມອື່ນປັດກາວໃກ້ສະ / Early Settle. Fees',
-    `${loan.earlySettleFeesPercent || 0}%`,
-    'ຄ່າທໍານຽມອື່ນໆ / Other Fees',
-    `${loan.otherFeesPercent || 0}%`
-  ]);
-  feeRow.eachCell((cell, num) => {
-    if (num === 1 || num === 3) {
-      cell.style = { ...labelStyle, border: borderThin };
-    } else {
-      cell.style = { ...valueStyle, border: borderThin };
-    }
-  });
-
-  // Add additional summary rows after fees
-  const summaryRow1 = worksheet.addRow([
-    'ດອກເບ້ຍໄດ້ຮັບທັງໝົດ / Total Inter. Rate Amt',
-    `${fmtMoney(assessment.totalInterest || 0)} LAK`,
-    'ຕົ້ນທຶນ + ດອກເບ້ຍລວມ / Total P+I Amt',
-    `${fmtMoney(assessment.totalPrincipalPlusInterest || 0)} LAK`
-  ]);
-  summaryRow1.eachCell((cell, num) => {
-    if (num === 1 || num === 3) cell.style = { ...labelStyle, border: borderThin };
-    else cell.style = { ...valueStyle, border: borderThin };
-  });
-
-  const summaryRow2 = worksheet.addRow([
-    'ອັດຕາທໍານຽມໃຫ້ຕົ້ນ / Monthly Principal',
-    `${fmtMoney(assessment.monthlyPrincipal || 0)} LAK`,
-    'ອັດຕາດອກເບ້ຍລາຍເດືອນ / Monthly Interest',
-    `${fmtMoney(assessment.monthlyInterest || 0)} LAK`
-  ]);
-  summaryRow2.eachCell((cell, num) => {
-    if (num === 1 || num === 3) cell.style = { ...labelStyle, border: borderThin };
-    else cell.style = { ...valueStyle, border: borderThin };
-  });
-
-  // --- SECTION 5: CONDITIONS AND COVENANTS ---
+  // ===================== SECTION V: CONDITIONS =====================
   worksheet.addRow([]);
-  const s5Row = worksheet.addRow([]);
-  worksheet.mergeCells(`A${s5Row.number}:D${s5Row.number}`);
-  s5Row.getCell(1).value = 'V. ເງື່ອນໄຂການປ່ອຍເງິນກູ້ / Condition and Covenant';
-  s5Row.getCell(1).style = sectionHeaderStyle;
-  s5Row.height = 20;
+  addSectionHeader('V. ເງື່ອນໄຂການປ່ອຍເງິນກູ້/Condition and Covenant');
 
-  // Condition 1
-  const condRow1 = worksheet.addRow([
-    '1. ເງື່ອນໄຂກ່ອນເຊັນສັນຍາ / Be. Iss. contract',
-    'ບໍ່ມີ'
+  const condRow1=worksheet.addRow(['1. ເງື່ອນໄຂກ່ອນເຊັນສັນຍາ/Be. Iss. contract','ບໍ່ມີ','','','']);
+  worksheet.mergeCells(`B${condRow1.number}:E${condRow1.number}`);
+  condRow1.getCell(1).style={...labelStyle,border: borderThin};
+  condRow1.getCell(2).style={...valueStyle,border: borderThin};
+  condRow1.getCell(3).style={border: borderThin};
+  condRow1.getCell(4).style={border: borderThin};
+  condRow1.getCell(5).style={border: borderThin};
+
+  const condRow2=worksheet.addRow([
+    '2. ເງື່ອນໄຂການເບິກຈ່າຍ/Before Disbursement',
+    `1. ສັນຍາກູ້ຢືມຕ້ອງໄດ້ຮັບການລົງນາມ ແລະ ຢັ້ງຢືນຈາກອໍານາດການປົກຄອງບ້ານ. 2. ວົງເງິນອະນຸມັດຈໍານວນ ${fmtMoney(loan.loanAmountRequested)} ກີບ ຈະຖືກໂອນເຂົ້າບັນຊີເງິນຝາກຂອງຜູ້ກູ້ຢືມ ທີ່ເປີດໄວ້ກັບ FINA ແລະ ການເບິກຖອນເງິນກູ້ແມ່ນຈະເຮັດຄັ້ງດຽວ.`,
+    '','',''
   ]);
-  condRow1.getCell(1).style = { ...labelStyle, border: borderThin };
-  condRow1.getCell(2).style = { ...valueStyle, border: borderThin };
-  condRow1.height = 20;
+  worksheet.mergeCells(`B${condRow2.number}:E${condRow2.number}`);
+  condRow2.getCell(1).style={...labelStyle,border: borderThin,alignment: {horizontal: 'left',vertical: 'top',wrapText: true}};
+  condRow2.getCell(2).style={...valueStyle,border: borderThin,alignment: {horizontal: 'left',vertical: 'top',wrapText: true}};
+  condRow2.getCell(3).style={border: borderThin};
+  condRow2.getCell(4).style={border: borderThin};
+  condRow2.getCell(5).style={border: borderThin};
+  condRow2.height=60;
 
-  // Condition 2
-  const condRow2 = worksheet.addRow([
-    '2. ເງື່ອນໄຂການເບິກຈ່າຍ / Before Disbursement',
-    `1. ສັນຍາກູ້ຢືມຕ້ອງໄດ້ຮັບການລົງນາມ ແລະ ຢັ້ງຢືນຈາກອໍານາດການປົກຄອງບ້ານ. 2. ວົງເງິນອະນຸມັດຈໍານວນ ${fmtMoney(loan.loanAmountRequested)} ກີບ ຈະຖືກໂອນເຂົ້າບັນຊີເງິນຝາກຂອງຜູ້ກູ້ຢືມ ທີ່ເປີດໄວ້ກັບ FINA ແລະ ການເບິກຖອນເງິນກູ້ແມ່ນຈະເຮັດຄັ້ງດຽວ.`
-  ]);
-  condRow2.getCell(1).style = { ...labelStyle, border: borderThin };
-  condRow2.getCell(2).style = { ...valueStyle, border: borderThin, wrapText: true, alignment: { horizontal: 'left', vertical: 'top', wrapText: true } };
-  condRow2.height = 50;
-
-  // --- SECTION 6: PREPARER AND APPROVER ---
+  // ===================== SECTION VI: PREPARER / APPROVER =====================
   worksheet.addRow([]);
-  const s6Row = worksheet.addRow([]);
-  worksheet.mergeCells(`A${s6Row.number}:D${s6Row.number}`);
-  s6Row.getCell(1).value = 'ຝ່າຍປະເມີນບົດ ແລະ ຜູ້ອະນຸມັດສິນເຊື່ອ / Preparer and Approver';
-  s6Row.getCell(1).style = sectionHeaderStyle;
-  s6Row.height = 20;
+  addSectionHeader('ຝ່າຍປະເມີນບົດ ແລະ ຜູ້ອະນຸມັດສິນເຊື່ອ / Preparer and Approver');
 
-  // Header row for signatures with 5 columns
-  const signHeaderRow = worksheet.addRow([
-    'ຕໍາແໜ່ງ / Position',
-    'ຊື່ / Name',
-    'ວັນທີ / Date',
-    'ລາຍເຊັນ / Signature'
-  ]);
+  // 5 ຄໍລໍາຈິງ: ຕໍາແໜ່ງ, ຊື່, ວັນທີ, ລາຍເຊັນ, ຄໍາເຫັນ (A,B,C,D,E) - ສະເໝີກັນກັບຄວາມກວ້າງລວມຂອງສ່ວນອື່ນທີ່ merge B:E ຫຼື D:E
+  const signHeaderRow=worksheet.addRow(['ຕໍາແໜ່ງ/Position','ຊື່/Name','ວັນທີ/Date','ລາຍເຊັນ','ຄໍາເຫັນ']);
   signHeaderRow.eachCell(cell => {
-    cell.style = {
-      font: { name: 'Noto Sans Lao', size: 10, bold: true, color: { argb: white } },
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: darkBlue } },
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    cell.style={
+      font: {name: 'Noto Sans Lao',size: 10,bold: true,color: {argb: white}},
+      fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: darkBlue}},
+      alignment: {horizontal: 'center',vertical: 'center',wrapText: true},
       border: borderThin
     };
   });
 
-  // Build approver list with proper data from approval history
-  const approverList = [];
-  
-  // 1. CEO - from approval history
-  const ceoApproval = assessment.approvalHistory?.find(h => h.level === 'CEO');
-  if (ceoApproval || assessment.ceoId) {
+  // ລໍາດັບໃນ PDF: ນາງ ພິລະນາ ດີດີ(?), ນາງ ສຸພະນາ ສີສະພະ, ທ້າວ ດະນະດີພະດີ(CEO), Credit Officer
+  // ສ້າງລາຍຊື່ຜູ້ອະນຸມັດ ຕາມ approvalHistory ຕົວຈິງ + Credit Officer ສຸດທ້າຍ
+  const approverList=[];
+
+  const verifierApproval=assessment.approvalHistory?.find(h => h.level==='VERIFIER');
+  if(verifierApproval) {
     approverList.push({
-      position: 'CEO',
-      name: ceoApproval?.approver?.fullName || assessment.ceo?.fullName || '',
-      date: ceoApproval?.approvedAt || '',
-      comments: ceoApproval?.comments || ''
+      position: 'VERIFIER',
+      name: verifierApproval.approver?.fullName||'',
+      date: verifierApproval.approvedAt,
+      comments: verifierApproval.comments||''
     });
   }
 
-  // 2. DCO - from approval history
-  const dcoApproval = assessment.approvalHistory?.find(h => h.level === 'DCO');
-  if (dcoApproval || assessment.dcoId) {
+  const dcoApproval=assessment.approvalHistory?.find(h => h.level==='DCO');
+  if(dcoApproval) {
     approverList.push({
       position: 'DCO',
-      name: dcoApproval?.approver?.fullName || assessment.dco?.fullName || '',
-      date: dcoApproval?.approvedAt || '',
-      comments: dcoApproval?.comments || ''
+      name: dcoApproval.approver?.fullName||'',
+      date: dcoApproval.approvedAt,
+      comments: dcoApproval.comments||''
     });
   }
 
-  // 3. Credit Operations Executive - from assessment
+  const ceoApproval=assessment.approvalHistory?.find(h => h.level==='CEO');
+  if(ceoApproval) {
+    approverList.push({
+      position: 'CEO',
+      name: ceoApproval.approver?.fullName||'',
+      date: ceoApproval.approvedAt,
+      comments: ceoApproval.comments||''
+    });
+  }
+
   approverList.push({
-    position: 'Credit Operations Executive',
-    name: assessment.assessedBy?.fullName || '',
-    date: assessment.assessedAt || '',
-    comments: assessment.preparerComments || ''
+    position: 'Credit Officer',
+    name: assessment.assessedBy?.fullName||'',
+    date: assessment.assessedAt,
+    comments: assessment.preparerComments||''
   });
 
-  // 4. Credit Officer (Preparer)
-  const creditOfficerApproval = assessment.approvalHistory?.find(h => h.level === 'CREDIT_OFFICER');
-  if (creditOfficerApproval || assessment.assessedById) {
-    approverList.push({
-      position: 'Credit Officer',
-      name: assessment.assessedBy?.fullName || '',
-      date: assessment.assessedAt || '',
-      comments: 'Created by CREDIT_OFFICER - Pending further review'
-    });
-  }
-
-  // Display each approver
   approverList.forEach(approver => {
-    const row = worksheet.addRow([
+    const row=worksheet.addRow([
       approver.position,
       approver.name,
       fmtDateShort(approver.date),
-      'ລາຍເຊັນ'
+      "",approver.comments
     ]);
-    
-    // Position cell - blue background
-    const posCell = row.getCell(1);
-    posCell.style = {
-      font: { name: 'Noto Sans Lao', size: 10, bold: true },
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: lightBlue } },
-      alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
-      border: borderThin
-    };
-    
-    // Name cell
-    const nameCell = row.getCell(2);
-    nameCell.style = {
-      font: { name: 'Noto Sans Lao', size: 10 },
-      alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
-      border: borderThin
-    };
-    
-    // Date cell
-    const dateCell = row.getCell(3);
-    dateCell.style = {
-      font: { name: 'Noto Sans Lao', size: 10 },
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: borderThin
-    };
-    
-    // Signature cell - blue background
-    const sigCell = row.getCell(4);
-    sigCell.style = {
-      font: { name: 'Noto Sans Lao', size: 10 },
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: borderThin,
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: lightBlue } }
-    };
-    
-    row.height = 25;
 
-    // Add comments row if comments exist
-    if (approver.comments && approver.comments.trim() !== '') {
-      const commentRow = worksheet.addRow([
-        'ຄຳເຫັນ / Comments:',
-        approver.comments,
-        '',
-        ''
-      ]);
-      
-      commentRow.getCell(1).style = {
-        font: { name: 'Noto Sans Lao', size: 9, bold: true },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAFAFA' } },
-        alignment: { horizontal: 'left', vertical: 'top', wrapText: true },
-        border: borderThin
-      };
-      
-      commentRow.getCell(2).style = {
-        font: { name: 'Noto Sans Lao', size: 9 },
-        alignment: { horizontal: 'left', vertical: 'top', wrapText: true },
-        border: borderThin,
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAFAFA' } }
-      };
-      
-      commentRow.getCell(3).style = { border: borderThin };
-      commentRow.getCell(4).style = { border: borderThin };
-      
-      commentRow.height = 35;
-    }
+    row.getCell(1).style={
+      font: {name: 'Noto Sans Lao',size: 10,bold: true},
+      fill: {type: 'pattern',pattern: 'solid',fgColor: {argb: lightBlue}},
+      alignment: {horizontal: 'left',vertical: 'center',wrapText: true},
+      border: borderThin
+    };
+    row.getCell(2).style={
+      font: {name: 'Noto Sans Lao',size: 10},
+      alignment: {horizontal: 'left',vertical: 'center',wrapText: true},
+      border: borderThin
+    };
+    row.getCell(3).style={
+      font: {name: 'Noto Sans Lao',size: 10},
+      alignment: {horizontal: 'center',vertical: 'center',wrapText: true},
+      border: borderThin
+    };
+    row.getCell(4).style={
+      font: {name: 'Noto Sans Lao',size: 10},
+      alignment: {horizontal: 'left',vertical: 'top',wrapText: true},
+      border: borderThin
+    };
+    row.getCell(5).style={
+      font: {name: 'Noto Sans Lao',size: 10},
+      alignment: {horizontal: 'left',vertical: 'top',wrapText: true},
+      border: borderThin
+    };
+
+    row.height=35;
   });
 
-  // Add bottom border
   worksheet.addRow([]);
 
   // ສ້າງໄຟລ໌ໃຫ້ດາວໂຫຼດ
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = window.URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${fileName}-${loan.id}.xlsx`;
+  const buffer=await workbook.xlsx.writeBuffer();
+  const blob=new Blob([buffer],{type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=window.URL.createObjectURL(blob);
+  const anchor=document.createElement('a');
+  anchor.href=url;
+  anchor.download=`${fileName}-${loan.id}.xlsx`;
   anchor.click();
   window.URL.revokeObjectURL(url);
 };
 
-
-export const handlePrintPDF = () => {
+export const handlePrintPDF=() => {
   window.print();
 };

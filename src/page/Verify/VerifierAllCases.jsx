@@ -147,10 +147,13 @@ const VerifierAllCases = () => {
                   className="w-full h-10 rounded-md border border-slate-300 px-3 text-sm focus:border-orange-500 focus:ring-orange-500"
                 >
                   <option value="ALL">ທັງໝົດ</option>
-                  <option value="PENDING">PENDING</option>
                   <option value="PENDING_VERIFIER">ລໍຖ້າ Verifier</option>
-                  <option value="RETURNED">RETURNED</option>
-                  <option value="APPROVED">APPROVED</option>
+                  <option value="PENDING_DCO">ລໍຖ້າ DCO</option>
+                  <option value="PENDING_DCO">ລໍຖ້າ DCO</option>
+                  <option value="PENDING_CEO">ລໍຖ້າ CEO</option>
+                  <option value="RETURNED">ສົ່ງກັບແກ້ໄຂ</option>
+                  <option value="REJECTED">ປະຕິເສດ</option>
+                  <option value="APPROVED">ອະນຸມັດແລ້ວ</option>
                 </select>
               </div>
 
@@ -197,9 +200,9 @@ const VerifierAllCases = () => {
                   className="w-full h-10 rounded-md border border-slate-300 px-3 text-sm focus:border-orange-500 focus:ring-orange-500"
                 >
                   <option value="ALL">ທັງໝົດ</option>
-                  <option value="PERSONAL_SALARY_GUARANTEE">PERSONAL_SALARY_GUARANTEE</option>
-                  <option value="PERSONAL_WITH_COLLATERAL">PERSONAL_WITH_COLLATERAL</option>
-                  <option value="BUSINESS">BUSINESS</option>
+                  <option value="PERSONAL_SALARY_GUARANTEE">ສິນເຊື່ອບຸກຄົນຄໍ້າປະກັນເງິນເດືອນ</option>
+                  <option value="PERSONAL_WITH_COLLATERAL">ສິນເຊື່ອບຸກຄົນຄໍ້າປະກັນຫຼັກຊັບ</option>
+                  <option value="BUSINESS">ສິນເຊື່ອທຸລະກິດ</option>
                 </select>
               </div>
 

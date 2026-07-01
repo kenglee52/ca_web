@@ -293,7 +293,7 @@ const FullLoanReport=() => {
                   </TableRow>
                   <TableRow className="bg-gray-50">
                     <TableCell className="font-bold">ຍອດຄົງເຫຼືອ (ຖ້າມີ)</TableCell>
-                    <TableCell className="text-right font-bold text-blue-700">{fmtMoney(loan.loanAmountRequested-(loan.payments?.reduce((s,p) => s+p.amount,0)||0))}</TableCell>
+                    <TableCell className="text-right font-bold text-blue-700">{fmtMoney(loan.loanAmountRequested-(loan.payments?.reduce((s,p) => s+Number(p.amountPaid),0)||0))}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

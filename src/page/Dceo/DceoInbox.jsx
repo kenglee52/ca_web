@@ -134,7 +134,7 @@ const DceoInbox = () => {
       {/* Table */}
       <Card className="border-none shadow-lg">
         <CardHeader>
-          <CardTitle className="text-lg">ຄຳຂໍກູ້ທີ່ລໍຖ້າການກວດສອບ (PENDING_DCEO)</CardTitle>
+          <CardTitle className="text-lg">ຄຳຂໍກູ້ທີ່ລໍຖ້າການກວດສອບ (PENDING_DCO)</CardTitle>
         </CardHeader>
 
         <CardContent>

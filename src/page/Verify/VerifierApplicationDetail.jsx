@@ -392,7 +392,6 @@ const VerifierApplicationDetail = () => {
                                         );
                                     })}
                                 </div>
-
                             )}
                         </CardContent>
                     </Card>

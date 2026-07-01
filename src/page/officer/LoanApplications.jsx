@@ -164,8 +164,9 @@ const LoanApplications = () => {
               className="h-11 rounded-md border border-slate-300 bg-white px-4 text-sm focus:border-orange-500 focus:ring-orange-500"
             >
               <option value="">ທັງໝົດສະຖານະ</option>
-              <option value="PENDING">PENDING</option>
               <option value="PENDING_VERIFIER">PENDING_VERIFIER</option>
+              <option value="PENDING_DCO">PENDING_DCO</option>
+              <option value="PENDING_CEO">PENDING_CEO</option>
               <option value="RETURNED">RETURNED</option>
               <option value="APPROVED">APPROVED</option>
               <option value="REJECTED">REJECTED</option>
